@@ -1,0 +1,36 @@
+{
+    "type": "vecrig",
+    "compat_version": "1.0",
+    "name": "ButtonFrame",
+    
+    "points":[
+        {
+            "x": -20,
+            "y": -20,
+            "links":[
+                1
+            ]
+        },
+        {
+            "x": 20,
+            "y": -20,
+            "links":[
+                3
+            ]
+        },
+        {
+            "x": -20,
+            "y": 20,
+            "links":[
+                0
+            ]
+        },
+        {
+            "x":20,
+            "y":20,
+            "links":[
+                2
+            ]
+        }
+    ]
+}
