@@ -1,7 +1,7 @@
 {
     "type": "vecrig",
     "compat_version": "1.0",
-    "name": "ButtonFrame",
+    "name": "buttonframe",
     
     "points":[
         {
