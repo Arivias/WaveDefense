@@ -71,7 +71,7 @@ class EditorPane:
     def hotkey(self,x):
         for row in self.objects:
             for obj in row:
-                if obj.hotkey!="" and obj.hotkey==x and obj.value==0:
+                if obj.hotkey!="" and obj.hotkey==x and (obj.value==0 or obj.claimtype=="toggle"):
                     self.unclickByObjClaimType(obj)
                     mode=obj.click()
                     if mode!="func":
@@ -206,14 +206,20 @@ class Editor:
         self.keys[pygame.K_LCTRL]=False
         self.centerpos=None
         self.selection=[]
+        self.selection_single=None
         self.rig = vr.Rig(None,True)
         self.app=app
         self.last_mouse=(0,0,0)
         self.mm="none"
         self.mousemode=-1
+        self.undo_points=[]
         self.clicktime=0
         self.panes=[]
         self.func_list=[]
+        self.bgimage=None
+        self.bgshow=True
+        self.bgsizeorig=(0,0)
+        self.bgscale=1
         self.mirrormode=[False,False]
         #self.func_list2=[]
         self.keylistener = lambda x:self.listener_hotkey(x)
@@ -264,6 +270,37 @@ class Editor:
                     else:
                         self.mousemode=2
                         self.func_list=[0,0]
+                elif self.mm=="translate":
+                    if mstate[0]==1:
+                        p=self.rig.toLocalSpace(mpos)
+                        self.func_list=[[p[0],p[1]]]
+                elif self.mm=="rotate" or self.mm=="scale":
+                    if mstate[0]==1:
+                        self.func_list=[vr.Rig(None,False),None,self.selection]
+                        if self.selection_single==None:
+                            x=0
+                            y=0
+                            for pt in self.selection:
+                                p=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
+                                x+=p[0]
+                                y+=p[1]
+                            length=len(self.selection)
+                            x/=length
+                            y/=length
+                            self.func_list[0].x=x
+                            self.func_list[0].y=y
+                        else:
+                            pos=self.selection_single.ptActual(self.rig.x,self.rig.y,self.rig.scale)
+                            self.func_list[0].x=pos[0]
+                            self.func_list[0].y=pos[1]
+                        self.func_list[1]=mpos
+                        for pt in self.selection:
+                            pos=self.func_list[0].toLocalSpace(pt.ptActual(self.rig.x,self.rig.y,self.rig.scale))
+                            self.func_list[0].points.append(vr.RigPoint(pos[0],pos[1],[]))
+                        self.mousemode=0
+                    if mstate[2]==1:
+                        self.mousemode=2
+                    
             ###run on tick
             if self.mm=="pointer" and mstate[0]==1:
                 if self.last_mouse[0]==0:
@@ -307,7 +344,7 @@ class Editor:
                         ty=0
                         ndx=-1
                         ndy=-1
-                        for pt in self.rig.points:
+                        for pt in self.selection:
                             pos=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
                             x=math.fabs(pos[0]-mpos[0])
                             y=math.fabs(pos[1]-mpos[1])
@@ -332,6 +369,28 @@ class Editor:
                         if ndy!=-1 and (ndy<ndx or self.keys[pygame.K_LSHIFT]==False):
                             ppos[1]=ty
                         self.func_list=ppos
+            elif self.mm=="translate":
+                p=self.rig.toLocalSpace(mpos)
+                for pt in self.selection:
+                    pt.points[0]+=p[0]-self.func_list[0][0]
+                    pt.points[1]+=p[1]-self.func_list[0][1]
+                self.func_list[0]=p
+            elif self.mm=="rotate":
+                if self.mousemode==0:
+                    origin=[self.func_list[0].x,self.func_list[0].y]
+                    rc=self.radAround(origin,mpos)
+                    rdif=self.radAround(origin,self.func_list[1])-rc
+                    self.func_list[0].rotateBy(rdif*-1)
+                    self.func_list[1]=mpos
+                    for pt in range(len(self.func_list[2])):
+                        self.func_list[2][pt].points=self.rig.toLocalSpace(self.func_list[0].points[pt].ptActual(self.func_list[0].x,self.func_list[0].y,self.func_list[0].scale))
+            elif self.mm=="scale":
+                if self.mousemode==0:
+                    d=math.sqrt(math.pow(math.fabs(self.func_list[0].x-mpos[0]),2)+math.pow(math.fabs(self.func_list[0].y-mpos[1]),2))-math.sqrt(math.pow(math.fabs(self.func_list[1][0]-self.func_list[0].x),2)+math.pow(math.fabs(self.func_list[1][1]-self.func_list[0].y),2))
+                    self.func_list[0].scale+=d/50.0
+                    self.func_list[1]=mpos
+                    for pt in range(len(self.func_list[2])):
+                        self.func_list[2][pt].points=self.rig.toLocalSpace(self.func_list[0].points[pt].ptActual(self.func_list[0].x,self.func_list[0].y,self.func_list[0].scale))
                     
 
         if mstate[0]==0 and self.last_mouse[0]==1:#Mouse 1 Release
@@ -365,6 +424,16 @@ class Editor:
                     else:
                         pos=(-1*(self.centerpos[0]-mpos[0]),-1*(self.centerpos[1]-mpos[1]))
                     self.rig.points.append(vr.RigPoint(pos[0]/self.rig.scale,pos[1]/self.rig.scale,[]))
+                    last=self.rig.points[len(self.rig.points)-1]
+                    if self.mirrormode[0]:
+                        self.rig.points.append(vr.RigPoint(last.points[0]*-1,last.points[1],[]))
+                    if self.mirrormode[1]:
+                        self.rig.points.append(vr.RigPoint(last.points[0],last.points[1]*-1,[]))
+                    if self.mirrormode[0] and self.mirrormode[1]:
+                        self.rig.points.append(vr.RigPoint(last.points[0]*-1,last.points[1]*-1,[]))
+            elif self.mm=="rotate" or self.mm=="scale":
+                self.mousemode=-1
+                self.selection_single=self.nearest_point(mpos[0],mpos[1],[])
                 
         if mstate[0]==0 and mstate[2]==0:######Run after all mouse stuff
             self.mm="none"
@@ -377,6 +446,12 @@ class Editor:
                 self.upkeylistener(ev)
 
         #draw stuff
+
+        if self.bgimage!=None and self.bgshow:
+            bsize=self.bgimage.get_size()
+            bpos=(self.centerpos[0]-bsize[0]/2,self.centerpos[1]-bsize[1]/2)
+            window.blit(self.bgimage,bpos)
+        
         xtarget=0
         for pane in self.panes:
             pane.draw(window)
@@ -390,14 +465,20 @@ class Editor:
         self.rig.y=self.centerpos[1]
         #grid
         gridcolor=(50,50,50)
+        if self.mirrormode[1]:
+            gridcolor=(0,255,255)
         pygame.draw.aaline(window,gridcolor,(0,size[1]/2),(xtarget,size[1]/2))
+        gridcolor=(50,50,50)
+        if self.mirrormode[0]:
+            gridcolor=(0,255,255)
         pygame.draw.aaline(window,gridcolor,(xtarget/2,0),(xtarget/2,size[1]))
+        gridcolor=(50,50,50)
         pygame.draw.rect(window,gridcolor,[self.centerpos[0]-20,self.centerpos[1]-20,40,40],1)
         pygame.draw.rect(window,gridcolor,[self.centerpos[0]-120,self.centerpos[1]-120,240,240],1)
         
         #precise placement lines
         if self.panes[0].objnames["linker"].value==1 and self.keys[pygame.K_LCTRL]:
-            for pt in self.rig.points:
+            for pt in self.selection:
                 precisecolor=(35,35,35)
                 pos=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
                 pygame.draw.aaline(window,precisecolor,(0,pos[1]),(xtarget,pos[1]))
@@ -409,6 +490,9 @@ class Editor:
             if pt!=None:
                 center=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
                 pygame.draw.circle(window,(175,175,175),(int(center[0]),int(center[1])),5,1)
+        if self.selection_single!=None:
+            pos=self.selection_single.ptActual(self.rig.x,self.rig.y,self.rig.scale)
+            pygame.draw.circle(window,(0,255,255),(int(pos[0]),int(pos[1])),5,1)
         if self.mm=="pointer" and mstate[0]==1:
             if self.func_list[1]:
                 for pt in self.func_list[3]:
@@ -435,7 +519,8 @@ class Editor:
                         nearest=pt
         return nearest
     def deselect(self):
-        self.selection=[]
+        if self.mm=="none":
+            self.selection=[]
     def ptindex(self,pt):
         for i in range(len(self.rig.points)):
             if self.rig.points[i]==pt:
@@ -474,7 +559,7 @@ class Editor:
         self.panes.append(pane)
     def save(self):
         name=self.findpanename("file").objnames["filename"].contents
-        print(self.rig.toJson(name),file=open(name+".json","w"))
+        print(self.rig.toJson(name),file=open("saves/"+name+".json","w"))
     def findpanename(self,name):
         for pane in self.panes:
             if pane.name==name:
@@ -487,4 +572,31 @@ class Editor:
     def deleteSelection(self):
         self.rig.deletePts(self.selection)
         self.selection=[]
-        
+    def loadRig(self,name):
+        path="saves/"
+        self.rig=vr.Rig(path+name+".json",True)
+        self.selection=[]
+        if len(self.rig.points)>0:
+            return True
+        return False
+    def radAround(self,origin,pos):
+        return math.atan2(pos[1]-origin[1],pos[0]-origin[0])
+    def setbg(self):
+        try:
+            self.bgimage=pygame.image.load("bg/"+self.findpanename("bg").objnames["bgfile"].contents)
+            self.bgsizeorig=self.bgimage.get_size()
+            self.bgscale=1.0
+        except Exception:
+            self.bgimage=None
+    def setbgscale(self,x):
+        if self.bgimage==None:
+            return
+        try:
+            s=float(x)
+            self.bgscale=s
+            self.bgimage=pygame.transform.scale(self.bgimage,(int(s*self.bgsizeorig[0]),int(s*self.bgsizeorig[1])))
+        except Exception:
+            pass
+    def togglebg(self,c):
+        if c:
+            self.bgshow=not self.bgshow
