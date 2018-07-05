@@ -54,6 +54,7 @@ def load(editor,c):
     if c:
         if editor.loadRig(editor.findpanename("file").objnames["filename"].contents):
             editor.unstackPane("file")
+            editor.panes[0].objnames["file"].unclick()
 def scale(editor,x):
     try:
         editor.rig.scale=float(x)

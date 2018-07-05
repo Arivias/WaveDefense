@@ -2,10 +2,12 @@ import json
 import pygame
 import math
 from pygame.locals import *
+from abc import ABC, abstractmethod
 
 
 class RigPoint:
     def __init__(self,x,y,links):
+        self.color=(255,255,255,255)
         self.points=[x,y]
         self.rot_origin=[x,y]
         self.displacement=[0,0]
@@ -46,11 +48,26 @@ class Rig:
         else:
             pass
 
-    def render(self,window,color=(255,255,255)):
+    def render(self,window,color=(255,255,255),forceColor=False):
         for pt in self.points:
+            cl=color
+            if not forceColor:
+                cl=pt.color
             if self.markers:
                 center=pt.ptActual(self.x,self.y,self.scale)
                 pygame.draw.circle(window,(100,100,100),(int(center[0]),int(center[1])),3)
+            transparency=[]
+            draw=[]
+            wsize=window.get_size()
+            for lk in pt.links:
+                alpha=pt.color+self.points[lk]
+                alpha/=2
+                if alpha==255:
+                    transparency+=True
+                    
+                else:
+                    transparency+=False
+                if pt
             for lk in pt.links:
                 pygame.draw.aaline(window,color,pt.ptActual(self.x,self.y,self.scale),self.points[lk].ptActual(self.x,self.y,self.scale))
         #pygame.draw.lines(window,(255,255,255),False,[(250,400),(700,250)],3)
@@ -100,7 +117,14 @@ class Rig:
                             p.links[link]-=1
     def toLocalSpace(self,pos):
         return [-1*(self.x-pos[0])/self.scale,-1*(self.y-pos[1])/self.scale]
+    def ptOnScreen(self,pos,window):
+        return 
         
-                    
+class RigAnimator(ABC):
+    def __init__(self,rig):
+        self.rig=rig
+        self.finished=False
 
-#a=Rig("Resources/Vector_Rigs/test.json")
+    @abstractmethod
+    def tick(self,deltaTime):
+        pass

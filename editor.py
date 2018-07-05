@@ -221,6 +221,7 @@ class Editor:
         self.bgsizeorig=(0,0)
         self.bgscale=1
         self.mirrormode=[False,False]
+        self.mirrorselect=([],[],[])#x y xy
         #self.func_list2=[]
         self.keylistener = lambda x:self.listener_hotkey(x)
         self.upkeylistener = lambda x:self.listener_upkey(x)
@@ -265,8 +266,12 @@ class Editor:
                 elif self.mm=="linker":
                     if mstate[0]==1:
                         self.mousemode=0
-                        self.func_list=[None]
-                        self.selection=[self.nearest_point(mpos[0],mpos[1],[])]
+                        self.func_list=[None,[[None],[None],[None]]]
+                        sel=self.nearest_point(mpos[0],mpos[1],[])
+                        self.selection=[]
+                        if sel!=None:
+                            self.selection=[sel]
+                        self.mirrorselect=self.mirrorSelect(self.selection,True)
                     else:
                         self.mousemode=2
                         self.func_list=[0,0]
@@ -277,7 +282,7 @@ class Editor:
                 elif self.mm=="rotate" or self.mm=="scale":
                     if mstate[0]==1:
                         self.func_list=[vr.Rig(None,False),None,self.selection]
-                        if self.selection_single==None:
+                        if self.selection_single==None and len(self.selection)>0:
                             x=0
                             y=0
                             for pt in self.selection:
@@ -289,7 +294,7 @@ class Editor:
                             y/=length
                             self.func_list[0].x=x
                             self.func_list[0].y=y
-                        else:
+                        elif len(self.selection)>0:
                             pos=self.selection_single.ptActual(self.rig.x,self.rig.y,self.rig.scale)
                             self.func_list[0].x=pos[0]
                             self.func_list[0].y=pos[1]
@@ -332,12 +337,44 @@ class Editor:
                 if self.mousemode==0:
                     pt=self.nearest_point(mpos[0],mpos[1],self.selection)
                     if pt !=None and pt!=self.func_list[0]:
+                        mpt=self.mirrorSelect([pt],True)
                         if self.func_list[0]==None:
+                            if self.mirrormode[0]:
+                                if self.mirrorselect[0][0]!=[None] and mpt[0][0]!=self.selection[0]:
+                                    self.link(self.mirrorselect[0][0],mpt[0][0],True)
+                            if self.mirrormode[1]:
+                                if self.mirrorselect[1][0]!=[None] and mpt[1][0]!=self.selection[0]:
+                                    self.link(self.mirrorselect[1][0],mpt[1][0],True)
+                            if self.mirrormode[0] and self.mirrormode[1]:
+                                if self.mirrorselect[2][0]!=[None] and mpt[2][0]!=self.selection[0]:
+                                    self.link(self.mirrorselect[2][0],mpt[2][0],True)
                             self.link(self.selection[0],pt,True)
                         else:
+                            if self.mirrormode[0]:
+                                if self.mirrorselect[0][0]!=[None] and mpt[0][0]!=self.selection[0]:
+                                    self.link(self.mirrorselect[0][0],mpt[0][0],True)
+                                if self.func_list[1][0]!=[None] and self.mirrorselect[0][0]!=self.func_list[0]:
+                                    self.link(self.mirrorselect[0][0],self.func_list[1][0],True)
+                            if self.mirrormode[1]:
+                                if self.mirrorselect[1][0]!=[None] and mpt[1][0]!=self.selection[0]:
+                                    self.link(self.mirrorselect[1][0],mpt[1][0],True)
+                                if self.func_list[1][1]!=[None] and self.mirrorselect[1][0]!=self.func_list[0]:
+                                    self.link(self.mirrorselect[1][0],self.func_list[1][1],True)
+                            if self.mirrormode[0] and self.mirrormode[1]:
+                                if self.mirrorselect[2][0]!=[None] and mpt[2][0]!=self.selection[0]:
+                                    self.link(self.mirrorselect[2][0],mpt[2][0],True)
+                                if self.func_list[1][2]!=[None] and self.mirrorselect[2][0]!=self.func_list[0]:
+                                    self.link(self.mirrorselect[2][0],self.func_list[1][2],True)
                             self.link(self.selection[0],self.func_list[0],True)
                             self.link(self.selection[0],pt,True)
-                        self.func_list=[pt]
+                        self.func_list[0]=pt
+                        if self.mirrormode[0]:
+                            self.func_list[1][0]=mpt[0][0]
+                        if self.mirrormode[1]:
+                            self.func_list[1][1]=mpt[1][0]
+                        if self.mirrormode[0] and self.mirrormode[1]:
+                            self.func_list[1][2]=mpt[2][0]
+                            
                 else:
                     if self.keys[pygame.K_LCTRL]:
                         tx=0
@@ -364,9 +401,15 @@ class Editor:
                             ndy=y
                             ty=pos[1]
                         ppos=[mpos[0],mpos[1]]
-                        if ndx!=-1 and (ndx<ndy or self.keys[pygame.K_LSHIFT]==False):
+                        ndx2=ndx
+                        ndy2=ndy
+                        if ndx2==-1:
+                            ndx2=9999
+                        if ndy2==-1:
+                            ndy2=9999
+                        if ndx!=-1 and (ndx2<ndy2 or self.keys[pygame.K_LSHIFT]==False):
                             ppos[0]=tx
-                        if ndy!=-1 and (ndy<ndx or self.keys[pygame.K_LSHIFT]==False):
+                        if ndy!=-1 and (ndy2<ndx2 or self.keys[pygame.K_LSHIFT]==False):
                             ppos[1]=ty
                         self.func_list=ppos
             elif self.mm=="translate":
@@ -391,6 +434,20 @@ class Editor:
                     self.func_list[1]=mpos
                     for pt in range(len(self.func_list[2])):
                         self.func_list[2][pt].points=self.rig.toLocalSpace(self.func_list[0].points[pt].ptActual(self.func_list[0].x,self.func_list[0].y,self.func_list[0].scale))
+
+            if self.mm=="translate" or self.mm=="rotate" or self.mm=="scale": #General mirror
+                if self.mirrormode[0]:
+                    for i in range(len(self.selection)):
+                        if self.mirrorselect[0][i]!=None:
+                            self.mirrorselect[0][i].points=[self.selection[i].points[0]*-1,self.selection[i].points[1]]
+                if self.mirrormode[1]:
+                    for i in range(len(self.selection)):
+                        if self.mirrorselect[1][i]!=None:
+                            self.mirrorselect[1][i].points=[self.selection[i].points[0],self.selection[i].points[1]*-1]
+                if self.mirrormode[0] and self.mirrormode[1]:
+                    for i in range(len(self.selection)):
+                        if self.mirrorselect[2][i]!=None:
+                            self.mirrorselect[2][i].points=[self.selection[i].points[0]*-1,self.selection[i].points[1]*-1]
                     
 
         if mstate[0]==0 and self.last_mouse[0]==1:#Mouse 1 Release
@@ -405,10 +462,13 @@ class Editor:
                     else:
                         self.selection=self.func_list[3]
                 else:
-                    if self.keys[pygame.K_LSHIFT]:
-                        self.selection.append(self.nearest_point(mpos[0],mpos[1],[]))
-                    else:
-                        self.selection=[self.nearest_point(mpos[0],mpos[1],[])]
+                    pt=self.nearest_point(mpos[0],mpos[1],[])
+                    if pt!=None:
+                        if self.keys[pygame.K_LSHIFT]:
+                            self.selection.append(pt)
+                        else:
+                            self.selection=[pt]
+                self.mirrorselect=self.mirrorSelect(self.selection)
             elif self.mm=="linker":
                 self.mousemode=-1
         if mstate[2]==0 and self.last_mouse[2]==1:#Mouse 2 Release
@@ -490,6 +550,22 @@ class Editor:
             if pt!=None:
                 center=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
                 pygame.draw.circle(window,(175,175,175),(int(center[0]),int(center[1])),5,1)
+        if self.mirrormode[0]:
+            for pt in self.mirrorselect[0]:
+                if pt!=None:
+                    center=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
+                    pygame.draw.circle(window,(0,255,255),(int(center[0]),int(center[1])),5,1)
+        if self.mirrormode[1]:
+            for pt in self.mirrorselect[1]:
+                if pt!=None:
+                    center=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
+                    pygame.draw.circle(window,(0,255,255),(int(center[0]),int(center[1])),5,1)
+        if self.mirrormode[1] and self.mirrormode[0]:
+            for pt in self.mirrorselect[2]:
+                if pt!=None:
+                    center=pt.ptActual(self.rig.x,self.rig.y,self.rig.scale)
+                    pygame.draw.circle(window,(0,255,255),(int(center[0]),int(center[1])),5,1)
+                
         if self.selection_single!=None:
             pos=self.selection_single.ptActual(self.rig.x,self.rig.y,self.rig.scale)
             pygame.draw.circle(window,(0,255,255),(int(pos[0]),int(pos[1])),5,1)
@@ -521,6 +597,8 @@ class Editor:
     def deselect(self):
         if self.mm=="none":
             self.selection=[]
+            self.mirrorselect=([],[],[])
+            self.selection_single=None
     def ptindex(self,pt):
         for i in range(len(self.rig.points)):
             if self.rig.points[i]==pt:
@@ -567,15 +645,28 @@ class Editor:
         return None
     def selectall(self):
         self.selection=[]
+        self.mirrorselect=([],[],[])
+        self.selection_single=None
         for pt in self.rig.points:
             self.selection.append(pt)
+        self.mirrorselect=self.mirrorSelect(self.selection)
     def deleteSelection(self):
         self.rig.deletePts(self.selection)
+        if self.mirrormode[0]:
+            self.rig.deletePts(self.mirrorselect[0])
+        if self.mirrormode[1]:
+            self.rig.deletePts(self.mirrorselect[1])
+        if self.mirrormode[0] and self.mirrormode[1]:
+            self.rig.deletePts(self.mirrorselect[2])
         self.selection=[]
+        self.mirrorselect=([],[],[])
+        self.selection_single=None
     def loadRig(self,name):
         path="saves/"
         self.rig=vr.Rig(path+name+".json",True)
         self.selection=[]
+        self.mirrorselect=([],[],[])
+        self.selection_single=None
         if len(self.rig.points)>0:
             return True
         return False
@@ -600,3 +691,32 @@ class Editor:
     def togglebg(self,c):
         if c:
             self.bgshow=not self.bgshow
+    def ptAtLocal(self,pos):
+        for pt in self.rig.points:
+            if pt.points[0]==pos[0] and pt.points[1]==pos[1]:
+                return pt
+        return None
+    def mirrorSelect(self,sel,allowSelf=False):
+        m=([],[],[])
+        if self.mirrormode[0]:
+            for pt in sel:
+                pos=(pt.points[0]*-1,pt.points[1])
+                mp=self.ptAtLocal(pos)
+                if mp != None and mp in sel and not allowSelf:
+                    mp=None
+                m[0].append(mp)
+        if self.mirrormode[1]:
+            for pt in sel:
+                pos=(pt.points[0],pt.points[1]*-1)
+                mp=self.ptAtLocal(pos)
+                if mp != None and (mp in sel or mp in m[0]) and not allowSelf:
+                    mp=None
+                m[1].append(mp)
+        if self.mirrormode[0] and self.mirrormode[1]:
+            for pt in sel:
+                pos=(pt.points[0]*-1,pt.points[1]*-1)
+                mp=self.ptAtLocal(pos)
+                if mp != None and (mp in sel or mp in m[0] or mp in m[1]) and not allowSelf:
+                    mp=None
+                m[2].append(mp)
+        return m
