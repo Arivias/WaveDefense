@@ -15,7 +15,7 @@ class TestState(wd.GameState):
         #self.debug=0
         
     def loop(self,game,app,event):
-        self.s1.update([0,1],app.deltaTime)
+        self.s1.update([1,1],app.deltaTime)
         #d=[(0-10*math.sin(self.debug))*0.5,(10*math.cos(self.debug))*1]
         #print(math.hypot(d[0],d[1]))
         #self.debug+=math.pi*app.deltaTime

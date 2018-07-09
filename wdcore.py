@@ -69,28 +69,22 @@ class Ship:
         #movement
         m_worldAngle=math.atan2(inputs[1],inputs[0])+math.pi/2
         #m_worldAngle%=math.pi*2
-        m_tAngle=m_worldAngle-self.rig.rot
+        m_tAngle=(m_worldAngle-self.rig.rot)*-1
         m_total=0
-        #forward [y]
-        #m_segAngle=0+self.rig.rot-m_worldAngle
-        #m_segValue=[(0-self.data[1]*math.sin(m_segAngle))*math.fabs(inputs[0]),(self.data[1]*math.cos(m_segAngle))*math.fabs(inputs[1])]
-        m_segValue=[(0-self.data[1]*math.sin(m_tAngle)),(self.data[1]*math.cos(m_tAngle))]
+        #forward
+        m_segValue=self.data[1]*math.cos(m_tAngle)
         #TODO: remove x value from segval
-        if m_segValue[1]>0:#use only same axis as original?
-            m_total+=m_segValue[1]
-        print(m_total)
-        #backward [y]
-        #m_segAngle=math.pi+self.rig.rot-m_worldAngle
-        #m_segValue=[(0-self.data[2]*math.sin(m_segAngle))*math.fabs(inputs[0]),(self.data[2]*math.cos(m_segAngle))*math.fabs(inputs[1])]
-        m_segValue=[(0-self.data[2]*-1*math.sin(m_tAngle)),(self.data[2]*-1*math.cos(m_tAngle))]
-        if m_segValue[1]>0:#use only same axis as original?
-            m_total+=m_segValue[1]
-        #strafe [x?]
-        #m_segAngle=(0.5*math.pi)+self.rig.rot-m_worldAngle
-        #m_segValue=[(self.data[3]*math.cos(m_segAngle))*math.fabs(inputs[0]),(self.data[3]*math.sin(m_segAngle))*math.fabs(inputs[1])]
-        m_segValue=[(self.data[3]*math.cos(m_tAngle)),(self.data[3]*math.sin(m_tAngle))]
-        m_total+=math.fabs(m_segValue[1])#use only same axis as original?
+        if m_segValue>0:#use only same axis as original?
+            m_total+=m_segValue
+        #backward
+        m_segValue=self.data[2]*-1*math.cos(m_tAngle)
+        if m_segValue>0:#use only same axis as original?
+            m_total+=m_segValue
+        #strafe
+        m_segValue=self.data[3]*math.sin(m_tAngle)
+        m_total+=math.fabs(m_segValue)#use only same axis as original?
         m_inputSpeed=[m_total*math.sin(m_worldAngle),m_total*math.cos(m_worldAngle)]
+        m_inputSpeed[1]=math.copysign(m_inputSpeed[1],inputs[1])
         self.speed[0]+=m_inputSpeed[0]*math.fabs(inputs[0])
         self.speed[1]+=m_inputSpeed[1]*math.fabs(inputs[1])
         m_h=math.fabs(math.hypot(self.speed[0],self.speed[1]))
