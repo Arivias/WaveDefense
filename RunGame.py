@@ -1,25 +1,28 @@
 import pygame
 from pygame.locals import *
+import wavedefense
 import time
 import sys
 
 class App:
     def __init__(self):
+        self.game = wavedefense.Game()
         self.lastTime=time.time()
+        self.deltaTime=0
         pygame.font.init()
         self.window=pygame.display.set_mode((960,540),pygame.HWSURFACE|pygame.DOUBLEBUF)
 
     def run(self):
-        self.running=False
+        self.running=True
         while self.running:
+            self.window.fill((0,0,0))
             event=pygame.event.get()
+            self.deltaTime=time.time()-self.lastTime
             self.lastTime=time.time()
-            #main loop
-            #render loop
+            self.game.loop(self,event)
+            self.game.render(self)
+            pygame.display.update()
         pygame.quit()
-
-    def deltaTime(self):
-        return (time.time()-self.lastTime)
 
 
 

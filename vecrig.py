@@ -6,14 +6,15 @@ from abc import ABC, abstractmethod
 
 
 class RigPoint:
-    def __init__(self,x,y,links):
-        self.color=(255,255,255,255)
+    def __init__(self,x,y,links,color=(255,255,255),transparency=False):
+        self.transparency=transparency
+        self.color=color
         self.points=[x,y]
         self.rot_origin=[x,y]
         self.displacement=[0,0]
         self.links=links
-    def ptActual(self,x,y,scale):
-        return [scale*(self.points[0]+self.displacement[0])+x,scale*(self.points[1]+self.displacement[1])+y]
+    def ptActual(self,x,y,scale,screenpos=[0,0],wscale=1.0):
+        return [(scale*(self.points[0]+self.displacement[0])+x+(-1*screenpos[0]))*wscale,(scale*(self.points[1]+self.displacement[1])+y+(-1*screenpos[1]))*wscale]
     def applyScale(self,scale):
         points=[self.points[0],self.points[1]]
         points[0]*=scale
@@ -30,6 +31,8 @@ class Rig:
         self.y=0
         self.rot=0
         self.scale=1
+        self.wscale=1.0
+        self.screenpos=[0,0]
         if path!=None:
             try:
                 idata=json.loads(open(path).read())
@@ -48,28 +51,55 @@ class Rig:
         else:
             pass
 
-    def render(self,window,color=(255,255,255),forceColor=False):
+    def render(self,window,color=None):
         for pt in self.points:
-            cl=color
-            if not forceColor:
-                cl=pt.color
+            cl={}
             if self.markers:
                 center=pt.ptActual(self.x,self.y,self.scale)
                 pygame.draw.circle(window,(100,100,100),(int(center[0]),int(center[1])),3)
-            transparency=[]
-            draw=[]
-            wsize=window.get_size()
+            transparency={}
             for lk in pt.links:
-                alpha=pt.color+self.points[lk]
-                alpha/=2
-                if alpha==255:
-                    transparency+=True
-                    
+                if color==None:
+                    cl[lk]=((pt.color[0]+self.points[lk].color[0])/2,(pt.color[1]+self.points[lk].color[1])/2,(pt.color[2]+self.points[lk].color[2])/2)
                 else:
-                    transparency+=False
-                if pt
+                    cl[lk]=color
+                if pt.transparency or self.points[lk].transparency:
+                    if self.ptOnScreen(pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window) or self.ptOnScreen(self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window):
+                        transparency[lk]=True
+                        #pta=pt.ptActual(self.x,self.y,self.scale)
+                        #lka=self.points[lk].ptActual(self.x,self.y,self.scale)
+                        #corner=[pta[0],pta[1]]
+                        #if lka[0]<corner[0]:
+                        #    corner[0]=lka[0]
+                        #if lka[1]<corner[1]:
+                        #    corner[1]=lka[1]
+                        #copy=[pta[0],pta[1]]
+                        #pta[0]-=lka[0]
+                        #if pta[0]<0:
+                        #    pta[0]=0
+                        #pta[1]-=lka[1]
+                        #if pta[1]<0:
+                        #    pta[1]=0
+                        #lka[0]-=copy[0]
+                        #if pta[0]<0:
+                        #    pta[0]=0
+                        #lka[1]-=copy[1]
+                        #if lka[1]<0:
+                        #    lka[1]=0
+                        #fabsx=math.fabs(pta[0]-lka[0])
+                        #fabsy=math.fabs(pta[1]-lka[1])
+                        #surf=pygame.Surface((fabsx+4,fabsy+4))
+                        surf=pygame.Surface(window.get_size())
+                        #pygame.draw.aaline(surf,cl[lk],(pta[0]+2,pta[1]+2),(lka[0]+2,lka[1]+2))#
+                        pygame.draw.aaline(surf,cl[lk],pt.ptActual(self.x,self.y,self.scale,self.screenpos),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos))
+                        surf.set_colorkey((0,0,0))
+                        #window.blit(surf,corner)
+                        window.blit(surf,(0,0))
+                else:
+                    transparency[lk]=False
             for lk in pt.links:
-                pygame.draw.aaline(window,color,pt.ptActual(self.x,self.y,self.scale),self.points[lk].ptActual(self.x,self.y,self.scale))
+                if transparency[lk]==False and (self.ptOnScreen(pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window) or self.ptOnScreen(self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window)):
+                    pygame.draw.aaline(window,cl[lk],pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale))
         #pygame.draw.lines(window,(255,255,255),False,[(250,400),(700,250)],3)
 
     def rotateTo(self,rot):
@@ -118,7 +148,37 @@ class Rig:
     def toLocalSpace(self,pos):
         return [-1*(self.x-pos[0])/self.scale,-1*(self.y-pos[1])/self.scale]
     def ptOnScreen(self,pos,window):
-        return 
+        size=window.get_size()
+        return (pos[0]>=0 and pos[1]>=0 and pos[0]<size[0] and pos[1]<size[1])
+
+def orientation(p1,p2,p3):#https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+    val=(p2[1]-p1[1])*(p3[0]-p2[0])-(p2[0]-p1[0])*(p3[1]-p2[1])
+    if val==0:
+        return 0
+    elif val>0:
+        return 1
+    else:
+        return 2
+def onSegment(p,q,r):
+    if q[0]<=max(p[0],r[0]) and q[0]>=min(p[0],r[0]) and q[1]<=max(p[1],r[1]) and q[1]>=min(p[1],r[1]):
+        return True
+    return False
+def checkLineCollision(p1,q1,p2,q2):
+    o1=orientation(p1,q1,p2)
+    o2=orientation(p1,q1,q2)
+    o3=orientation(p2,q2,p1)
+    o4=orientation(p2,q2,q1)
+    if o1!=o2 and o3!=o4:
+        return True
+    if o1==0 and onSegment(p1,p2,q1):
+        return True
+    if o2==0 and onSegment(p1,q2,q1):
+        return True
+    if o3==0 and onSegment(p2,p1,q2):
+        return True
+    if o4==0 and onSegment(p2,q1,q2):
+        return True
+    return False
         
 class RigAnimator(ABC):
     def __init__(self,rig):

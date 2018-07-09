@@ -29,7 +29,7 @@ class App:
 
             
     def on_loop(self,evnt):
-        self.display_surf.fill((0,0,0))
+        self.display_surf.fill((0,0,40))
         #self.vec.rotateBy(0.4*self.deltaTime())
         #self.vec.render(self.display_surf)
         #event=pygame.event.get()
