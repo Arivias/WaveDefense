@@ -8,10 +8,12 @@ import playerinputmanager
 class TestState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.screenpos=[0,0]
-        self.wscale=1.0
+        self.screenpos=[-500,-500]
+        self.wscale=0.5
         self.s1=wd.Ship("saves/ship3.json",[1,10,1,5,150,100,270,180,20,720])
         self.s1.rig.y=10
+        self.s1.rig.wscale=self.wscale
+        self.s1.rig.screenpos=self.screenpos
         self.inputman=playerinputmanager.PlayerInputManager()
         #self.debug=0
         

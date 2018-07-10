@@ -6,13 +6,14 @@ from abc import ABC, abstractmethod
 
 
 class RigPoint:
-    def __init__(self,x,y,links,color=(255,255,255),transparency=False):
+    def __init__(self,x,y,links,tags=[],color=(255,255,255),transparency=False):
         self.transparency=transparency
         self.color=color
         self.points=[x,y]
         self.rot_origin=[x,y]
         self.displacement=[0,0]
         self.links=links
+        self.tags=tags
     def ptActual(self,x,y,scale,screenpos=[0,0],wscale=1.0):
         return [(scale*(self.points[0]+self.displacement[0])+x+(-1*screenpos[0]))*wscale,(scale*(self.points[1]+self.displacement[1])+y+(-1*screenpos[1]))*wscale]
     def applyScale(self,scale):
@@ -33,17 +34,32 @@ class Rig:
         self.scale=1
         self.wscale=1.0
         self.screenpos=[0,0]
+        self.colliderSegments=[]
+        self.collisionRadius=0
         if path!=None:
             try:
                 idata=json.loads(open(path).read())
                 if "type" in idata.keys() and idata["type"]=="vecrig":
-                    if idata["compat_version"]=="1.0":
+                    if idata["compat_version"]=="1.1":
                         self.name=idata["name"]
                         for pt in idata["points"]:
-                            point=RigPoint(pt["x"],pt["y"],pt["links"])
+                            point=RigPoint(pt["x"],pt["y"],pt["links"],pt["tags"])
                             self.points.append(point)
                             #print(self.points[len(self.points)-1].ptsActual())
                         #print(self.name)
+                        for pt in self.points:
+                            if "collider" in pt.tags:
+                                r=math.hypot(pt.points[0],pt.points[1])
+                                self.collisionRadius=max(self.collisionRadius,r)
+                                for lk in pt.links:
+                                    if "collider" in self.points[lk].tags:
+                                        alreadyDone=False
+                                        for seg in self.colliderSegments:
+                                            if pt in seg and self.points[lk] in seg:
+                                                alreadyDone=True
+                                                break
+                                        if  not alreadyDone:
+                                            self.colliderSegments.append([pt,self.points[lk]])
                     else:
                         print("WARNING: VecRig file \""+path+"\" is out of date and was not loaded.")
             except Exception:
@@ -52,6 +68,8 @@ class Rig:
             pass
 
     def render(self,window,color=None):
+        #if self.collisionRadius>1:#show collisionRadius circles
+        #    pygame.draw.circle(window,(0,255,255),(int(self.x),int(self.y)),int(self.collisionRadius),1)
         for pt in self.points:
             cl={}
             if self.markers:
@@ -115,7 +133,7 @@ class Rig:
     def toJson(self,name):
         jsn={}
         jsn["type"]="vecrig"
-        jsn["compat_version"]="1.0"
+        jsn["compat_version"]="1.1"
         jsn["name"]=name
         pts=[]
         for pt in self.points:
@@ -126,6 +144,7 @@ class Rig:
             data["links"]=[]
             for link in pt.links:
                 data["links"].append(link)
+            data["tags"]=pt.tags
             pts.append(data)
         jsn["points"]=pts
         return json.dumps(jsn)

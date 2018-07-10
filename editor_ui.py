@@ -6,7 +6,7 @@ def mainpane(editor):
     rp="Resources/Vector_Rigs/Buttons/"
 
     row=[]
-    row.append(e.Button(editor,rp+"pointer.json","pointer","panemode","q"))
+    row.append(e.Button(editor,rp+"pointer.json","pointer","panemode","q",lambda c,x:pointerPane(editor,c)))
     row.append(e.Button(editor,rp+"linker.json","linker","panemode","l"))
     row.append(e.Button(editor,rp+"delete.json","delete","func","x",lambda c,x:editor.deleteSelection()))
     b.append(row)
@@ -114,4 +114,58 @@ def setbg(editor,c):
 def delbg(editor,c):
     if c:
        editor.bgimage=None
-
+def pointerPane(editor,c):
+    if c and len(editor.selection)>0:
+        editor.tagSelection=0
+        rp="Resources/Vector_Rigs/Buttons/"
+        b=[]
+        c=""
+        if len(editor.selection[0].tags)>0:
+            c=editor.selection[0].tags[0]
+        b.append([e.TextBox(editor,"tag",contents=c)])
+        row=[]
+        row.append(e.Button(editor,rp+"cycle.json","cycle","func",function=lambda c,x:cycleTag(editor,c)))
+        row.append(e.Button(editor,rp+"delete.json","deltag","func",function=lambda c,x:delTag(editor,c)))
+        row.append(e.Button(editor,rp+"add.json","addtag","func",function=lambda c,x:addTag(editor,c)))
+        b.append(row)
+        editor.stackPane(e.EditorPane("pointer",b))
+    else:
+        editor.unstackPane("pointer")
+def cycleTag(editor,c):
+    if c and len(editor.selection[0].tags)>0:
+        editor.tagSelection+=1
+        if editor.tagSelection>=len(editor.selection[0].tags):
+            editor.tagSelection=0
+        editor.findpanename("pointer").objnames["tag"].contents=editor.selection[0].tags[editor.tagSelection]
+def delTag(editor,c):
+    if c and len(editor.selection[0].tags)>0:
+        del editor.selection[0].tags[editor.tagSelection]
+        if len(editor.selection[0].tags)>0:
+            s=editor.findpanename("pointer").objnames["tag"].contents
+            if s!="":
+                for pt in range(len(editor.selection)):
+                    if pt==0:
+                        continue
+                    editor.selection[pt].tags.remove(s)
+                for m in editor.mirrorselect:
+                    for pt in m:
+                        pt.tags.remove(s)
+            if editor.tagSelection>=len(editor.selection[0].tags):
+                editor.tagSelection=0
+            editor.findpanename("pointer").objnames["tag"].contents=editor.selection[0].tags[editor.tagSelection]
+        else:
+            editor.findpanename("pointer").objnames["tag"].contents=""
+def addTag(editor,c):
+    if c:
+        s=editor.findpanename("pointer").objnames["tag"].contents
+        if s!="":
+            for pt in editor.selection:
+                if not s in pt.tags:
+                    pt.tags.append(s)
+            for m in editor.mirrorselect:
+                for pt in m:
+                    if pt!=None:
+                        if not s in pt.tags:
+                            pt.tags.append(s)
+            editor.tagSelection=len(editor.selection[0].tags)-1
+            editor.findpanename("pointer").objnames["tag"].contents=editor.selection[0].tags[editor.tagSelection]

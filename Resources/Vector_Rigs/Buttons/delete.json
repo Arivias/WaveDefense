@@ -1,1 +1,1 @@
-{"type": "vecrig", "compat_version": "1.0", "name": "delete", "points": [{"x": 12.48, "y": 12.35, "links": []}, {"x": -13.0, "y": -13.13, "links": [0]}, {"x": -13.26, "y": 12.74, "links": []}, {"x": 12.48, "y": -13.26, "links": [2]}]}
+{"type": "vecrig", "compat_version": "1.1", "name": "delete", "points": [{"x": 12.48, "y": 12.35, "links": [], "tags": []}, {"x": -13.0, "y": -13.13, "links": [0], "tags": []}, {"x": -13.26, "y": 12.74, "links": [], "tags": []}, {"x": 12.48, "y": -13.26, "links": [2], "tags": []}]}

@@ -222,6 +222,7 @@ class Editor:
         self.bgscale=1
         self.mirrormode=[False,False]
         self.mirrorselect=([],[],[])#x y xy
+        self.tagSelection=0
         #self.func_list2=[]
         self.keylistener = lambda x:self.listener_hotkey(x)
         self.upkeylistener = lambda x:self.listener_upkey(x)
@@ -469,6 +470,8 @@ class Editor:
                         else:
                             self.selection=[pt]
                 self.mirrorselect=self.mirrorSelect(self.selection)
+                self.findpanename("main").objnames["pointer"].unclick()
+                self.findpanename("main").objnames["pointer"].click()
             elif self.mm=="linker":
                 self.mousemode=-1
         if mstate[2]==0 and self.last_mouse[2]==1:#Mouse 2 Release
@@ -483,14 +486,14 @@ class Editor:
                         pos=(-1*(self.centerpos[0]-self.func_list[0]),-1*(self.centerpos[1]-self.func_list[1]))
                     else:
                         pos=(-1*(self.centerpos[0]-mpos[0]),-1*(self.centerpos[1]-mpos[1]))
-                    self.rig.points.append(vr.RigPoint(pos[0]/self.rig.scale,pos[1]/self.rig.scale,[]))
+                    self.rig.points.append(vr.RigPoint(pos[0]/self.rig.scale,pos[1]/self.rig.scale,[],[]))
                     last=self.rig.points[len(self.rig.points)-1]
                     if self.mirrormode[0]:
-                        self.rig.points.append(vr.RigPoint(last.points[0]*-1,last.points[1],[]))
+                        self.rig.points.append(vr.RigPoint(last.points[0]*-1,last.points[1],[],[]))
                     if self.mirrormode[1]:
-                        self.rig.points.append(vr.RigPoint(last.points[0],last.points[1]*-1,[]))
+                        self.rig.points.append(vr.RigPoint(last.points[0],last.points[1]*-1,[],[]))
                     if self.mirrormode[0] and self.mirrormode[1]:
-                        self.rig.points.append(vr.RigPoint(last.points[0]*-1,last.points[1]*-1,[]))
+                        self.rig.points.append(vr.RigPoint(last.points[0]*-1,last.points[1]*-1,[],[]))
             elif self.mm=="rotate" or self.mm=="scale":
                 self.mousemode=-1
                 self.selection_single=self.nearest_point(mpos[0],mpos[1],[])

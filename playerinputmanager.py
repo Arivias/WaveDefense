@@ -27,18 +27,27 @@ class PlayerInputManager:
         d=ship.data[7]
         a1=t-ship.rig.rot
         a2=((math.pi*2-ship.rig.rot)+t)
-        a3=ship.rig.rot+(math.pi*2-t)
+        a3=-1*(ship.rig.rot+(math.pi*2-t))
         proportionality=1000
         if math.fabs(a1)<math.fabs(a2) and math.fabs(a1)<math.fabs(a3):
-            r=(a1/ship.data[6])*proportionality
+            a=a1
         elif math.fabs(a2)<math.fabs(a1) and math.fabs(a2)<math.fabs(a3):
-            r=(ship.data[6]/a2)*proportionality
+            a=a2
         else:
-            r=-1*(ship.data[6]/a3)*proportionality
-        if r<-1:
-            r=-1
-        if r>1:
-            r=1
+            a=a3
+
+        r=0
+        if False:
+            if math.fabs(a)<((math.radians(ship.speed[2]**2)))/(2*math.radians(ship.data[6]+ship.data[7])):
+                r=math.copysign(1,-1*a)
+            else:
+                r=math.copysign(1,a)
+        else:
+            r=(a/ship.data[6])*proportionality
+            if r<-1:
+                r=-1
+            if r>1:
+                r=1
         out.append(r)#put output here
         
         return out

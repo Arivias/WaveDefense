@@ -1,0 +1,1 @@
+{"type": "vecrig", "compat_version": "1.1", "name": "test", "points": [{"x": 60.0, "y": -74.0, "links": [1, 2], "tags": ["collider"]}, {"x": 89.0, "y": 15.0, "links": [], "tags": ["collider"]}, {"x": 5.0, "y": 47.0, "links": [1], "tags": ["collider"]}]}

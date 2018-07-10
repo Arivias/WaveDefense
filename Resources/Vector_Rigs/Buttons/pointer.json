@@ -1,1 +1,1 @@
-{"type": "vecrig", "compat_version": "1.0", "name": "pointer", "points": [{"x": -12.0, "y": -14.1, "links": [1]}, {"x": -12.0, "y": 13.799999999999999, "links": [3]}, {"x": 12.6, "y": 5.1, "links": [3, 0]}, {"x": -3.3, "y": 4.2, "links": []}]}
+{"type": "vecrig", "compat_version": "1.1", "name": "pointer", "points": [{"x": -12.0, "y": -14.1, "links": [1], "tags": []}, {"x": -12.0, "y": 13.799999999999999, "links": [3], "tags": []}, {"x": 12.6, "y": 5.1, "links": [3, 0], "tags": []}, {"x": -3.3, "y": 4.2, "links": [], "tags": []}]}

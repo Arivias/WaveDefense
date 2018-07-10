@@ -95,7 +95,6 @@ class Ship:
         if m_h>m_max:
             m_total=m_max-math.hypot(m_speedOld[0],m_speedOld[1])
             m_total=max(m_total,0)
-            print(str(m_total))
             m_inputSpeed=[m_total*math.sin(m_worldAngle),m_total*math.cos(m_worldAngle)]
             m_inputSpeed[1]=math.copysign(m_inputSpeed[1],inputs[1])
             self.speed[0]=m_speedOld[0]+m_inputSpeed[0]*math.fabs(inputs[0])
@@ -121,3 +120,23 @@ class Ship:
         self.rig.x+=self.speed[0]*deltaTime
         self.rig.y+=self.speed[1]*deltaTime
         self.rig.rotateBy(math.radians(self.speed[2])*deltaTime)
+
+class GameWorld:
+    def __init__(self,radius):
+        self.radius=radius
+        self.rigs=[]
+    def render(self,window,screenpos=[0,0],wscale=1):
+        for rig in self.rigs:
+            rig.screenpos=screenpos
+            rig.wscale=wscale
+            rig.render(window)
+class Projectile:
+    def __init__(self):
+        pass
+class Weapon:
+    def __init__(self,ship,category):
+        wpoints=[]
+        for pt in ship.rig.points:
+            if category in pt.tags:
+                wpoints.append(pt)
+        pass
