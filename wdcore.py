@@ -5,6 +5,8 @@ import math
 class GameState(ABC):
     def __init__(self,game):
         self.game=game
+        self.wzoom=1
+        self.wpos=[0,0]
     @abstractmethod
     def loop(self,app,event):
         pass
@@ -23,7 +25,7 @@ class Ship:
         #5 x/y deceleration rate px/sec2
         #6 rotation acceleration rate deg/sec2
         #7 rotation deceleration rate deg/sec2
-        #8 max x/y speed px/sec
+        #8 max x/y speed multiplier px/sec
         #9 max rotation speed deg/sec
         self.currentHealth=self.data[0]
         self.speed=[0,0,0]
@@ -66,38 +68,53 @@ class Ship:
             
         ####inputs
 
-        #movement
+        ##movement
         m_worldAngle=math.atan2(inputs[1],inputs[0])+math.pi/2
-        #m_worldAngle%=math.pi*2
         m_tAngle=(m_worldAngle-self.rig.rot)*-1
         m_total=0
         #forward
         m_segValue=self.data[1]*math.cos(m_tAngle)
-        #TODO: remove x value from segval
-        if m_segValue>0:#use only same axis as original?
+        if m_segValue>0:
             m_total+=m_segValue
         #backward
         m_segValue=self.data[2]*-1*math.cos(m_tAngle)
-        if m_segValue>0:#use only same axis as original?
+        if m_segValue>0:
             m_total+=m_segValue
         #strafe
         m_segValue=self.data[3]*math.sin(m_tAngle)
-        m_total+=math.fabs(m_segValue)#use only same axis as original?
+        m_total+=math.fabs(m_segValue)
         m_inputSpeed=[m_total*math.sin(m_worldAngle),m_total*math.cos(m_worldAngle)]
         m_inputSpeed[1]=math.copysign(m_inputSpeed[1],inputs[1])
+
+        m_speedOld=[self.speed[0],self.speed[1]]
         self.speed[0]+=m_inputSpeed[0]*math.fabs(inputs[0])
         self.speed[1]+=m_inputSpeed[1]*math.fabs(inputs[1])
-        m_h=math.fabs(math.hypot(self.speed[0],self.speed[1]))
-        if m_h>self.data[8]:
-            m_h=self.data[8]
-            angle=math.atan2(self.speed[1],self.speed[0])
-            x=m_h*math.cos(angle)
-            y=m_h*math.sin(angle)
-            self.speed[0]=math.copysign(x,self.speed[0])
-            self.speed[1]=math.copysign(y,self.speed[1])
-            
         
-
+        m_h=math.hypot(self.speed[0],self.speed[1])
+        m_max=m_total*self.data[8]
+        if m_h>m_max:
+            m_total=m_max-math.hypot(m_speedOld[0],m_speedOld[1])
+            m_total=max(m_total,0)
+            print(str(m_total))
+            m_inputSpeed=[m_total*math.sin(m_worldAngle),m_total*math.cos(m_worldAngle)]
+            m_inputSpeed[1]=math.copysign(m_inputSpeed[1],inputs[1])
+            self.speed[0]=m_speedOld[0]+m_inputSpeed[0]*math.fabs(inputs[0])
+            self.speed[1]=m_speedOld[1]+m_inputSpeed[1]*math.fabs(inputs[1])
+        m_h=math.fabs(math.hypot(self.speed[0],self.speed[1]))
+        #if m_h>self.data[8]:#limiter
+        #    m_h=self.data[8]
+        #    angle=math.atan2(self.speed[1],self.speed[0])
+        #    x=m_h*math.cos(angle)
+        #    y=m_h*math.sin(angle)
+        #    self.speed[0]=math.copysign(x,self.speed[0])
+        #    self.speed[1]=math.copysign(y,self.speed[1])
+            
+        ##rotation
+        self.speed[2]+=self.data[6]*inputs[2]*deltaTime
+        m_r=math.fabs(self.speed[2])
+        if m_r>self.data[9]:
+            m_r=self.data[9]
+            self.speed[2]=math.copysign(m_r,self.speed[2])
 
         ####apply updates
         #print(self.speed[0])

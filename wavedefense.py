@@ -12,11 +12,11 @@ class Game:
         pass
 
     def loop(self,app,event):
+        self.keys=pygame.key.get_pressed()
         for e in event:
             if e.type==pygame.QUIT:
                 app.running=False
         self.state.loop(self,app,event)
-        self.keys=pygame.key.get_pressed()
 
     def render(self,app):
         window=app.window

@@ -145,11 +145,13 @@ class Rig:
                     for link in range(len(p.links)):
                         if p.links[link]>index:
                             p.links[link]-=1
-    def toLocalSpace(self,pos):
+    def toLocalSpace(self,pos):#probably wont work with zoom
         return [-1*(self.x-pos[0])/self.scale,-1*(self.y-pos[1])/self.scale]
     def ptOnScreen(self,pos,window):
         size=window.get_size()
         return (pos[0]>=0 and pos[1]>=0 and pos[0]<size[0] and pos[1]<size[1])
+    def screenCenter(self):
+        return [(self.x+(-1*self.screenpos[0]))*self.wscale,(self.y+(-1*self.screenpos[1]))*self.wscale]
 
 def orientation(p1,p2,p3):#https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
     val=(p2[1]-p1[1])*(p3[0]-p2[0])-(p2[0]-p1[0])*(p3[1]-p2[1])
