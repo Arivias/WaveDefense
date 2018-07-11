@@ -45,21 +45,7 @@ class Rig:
                         for pt in idata["points"]:
                             point=RigPoint(pt["x"],pt["y"],pt["links"],pt["tags"])
                             self.points.append(point)
-                            #print(self.points[len(self.points)-1].ptsActual())
-                        #print(self.name)
-                        for pt in self.points:
-                            if "collider" in pt.tags:
-                                r=math.hypot(pt.points[0],pt.points[1])
-                                self.collisionRadius=max(self.collisionRadius,r)
-                                for lk in pt.links:
-                                    if "collider" in self.points[lk].tags:
-                                        alreadyDone=False
-                                        for seg in self.colliderSegments:
-                                            if pt in seg and self.points[lk] in seg:
-                                                alreadyDone=True
-                                                break
-                                        if  not alreadyDone:
-                                            self.colliderSegments.append([pt,self.points[lk]])
+                        self.generateColliders()
                     else:
                         print("WARNING: VecRig file \""+path+"\" is out of date and was not loaded.")
             except Exception:
@@ -81,43 +67,31 @@ class Rig:
                     cl[lk]=((pt.color[0]+self.points[lk].color[0])/2,(pt.color[1]+self.points[lk].color[1])/2,(pt.color[2]+self.points[lk].color[2])/2)
                 else:
                     cl[lk]=color
+                if self.markers:#outline colliders
+                    for seg in self.colliderSegments:
+                        if pt in seg and self.points[lk] in seg:
+                            pygame.draw.line(window,(0,255,0),pt.ptActual(self.x,self.y,self.scale,self.screenpos),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos),2)
+                            break
                 if pt.transparency or self.points[lk].transparency:
                     if self.ptOnScreen(pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window) or self.ptOnScreen(self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window):
                         transparency[lk]=True
-                        #pta=pt.ptActual(self.x,self.y,self.scale)
-                        #lka=self.points[lk].ptActual(self.x,self.y,self.scale)
-                        #corner=[pta[0],pta[1]]
-                        #if lka[0]<corner[0]:
-                        #    corner[0]=lka[0]
-                        #if lka[1]<corner[1]:
-                        #    corner[1]=lka[1]
-                        #copy=[pta[0],pta[1]]
-                        #pta[0]-=lka[0]
-                        #if pta[0]<0:
-                        #    pta[0]=0
-                        #pta[1]-=lka[1]
-                        #if pta[1]<0:
-                        #    pta[1]=0
-                        #lka[0]-=copy[0]
-                        #if pta[0]<0:
-                        #    pta[0]=0
-                        #lka[1]-=copy[1]
-                        #if lka[1]<0:
-                        #    lka[1]=0
-                        #fabsx=math.fabs(pta[0]-lka[0])
-                        #fabsy=math.fabs(pta[1]-lka[1])
-                        #surf=pygame.Surface((fabsx+4,fabsy+4))
                         surf=pygame.Surface(window.get_size())
-                        #pygame.draw.aaline(surf,cl[lk],(pta[0]+2,pta[1]+2),(lka[0]+2,lka[1]+2))#
-                        pygame.draw.aaline(surf,cl[lk],pt.ptActual(self.x,self.y,self.scale,self.screenpos),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos))
+                        if "nodraw" in pt.tags or "nodraw" in self.points[lk].tags:
+                            if self.markers:
+                                pygame.draw.aaline(window,(255,0,255),pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale))
+                        else:
+                            pygame.draw.aaline(surf,cl[lk],pt.ptActual(self.x,self.y,self.scale,self.screenpos),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos))
                         surf.set_colorkey((0,0,0))
-                        #window.blit(surf,corner)
                         window.blit(surf,(0,0))
                 else:
                     transparency[lk]=False
             for lk in pt.links:
                 if transparency[lk]==False and (self.ptOnScreen(pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window) or self.ptOnScreen(self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window)):
-                    pygame.draw.aaline(window,cl[lk],pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale))
+                    if "nodraw" in pt.tags or "nodraw" in self.points[lk].tags:
+                        if self.markers:
+                            pygame.draw.aaline(window,(255,0,255),pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale))
+                    else:
+                        pygame.draw.aaline(window,cl[lk],pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale))
         #pygame.draw.lines(window,(255,255,255),False,[(250,400),(700,250)],3)
 
     def rotateTo(self,rot):
@@ -171,6 +145,21 @@ class Rig:
         return (pos[0]>=0 and pos[1]>=0 and pos[0]<size[0] and pos[1]<size[1])
     def screenCenter(self):
         return [(self.x+(-1*self.screenpos[0]))*self.wscale,(self.y+(-1*self.screenpos[1]))*self.wscale]
+    def generateColliders(self):
+        self.colliderSegments=[]
+        for pt in self.points:
+            if "collider" in pt.tags:
+                r=math.hypot(pt.points[0],pt.points[1])
+                self.collisionRadius=max(self.collisionRadius,r)
+                for lk in pt.links:
+                    if "collider" in self.points[lk].tags:
+                        alreadyDone=False
+                        for seg in self.colliderSegments:
+                            if pt in seg and self.points[lk] in seg:
+                                alreadyDone=True
+                                break
+                        if  not alreadyDone:
+                            self.colliderSegments.append([pt,self.points[lk]])
 
 def orientation(p1,p2,p3):#https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
     val=(p2[1]-p1[1])*(p3[0]-p2[0])-(p2[0]-p1[0])*(p3[1]-p2[1])

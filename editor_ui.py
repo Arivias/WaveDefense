@@ -140,21 +140,29 @@ def cycleTag(editor,c):
 def delTag(editor,c):
     if c and len(editor.selection[0].tags)>0:
         del editor.selection[0].tags[editor.tagSelection]
-        if len(editor.selection[0].tags)>0:
-            s=editor.findpanename("pointer").objnames["tag"].contents
+        s=editor.findpanename("pointer").objnames["tag"].contents
+        regen=(s=="collider")
+        if len(editor.selection)>1:
             if s!="":
                 for pt in range(len(editor.selection)):
                     if pt==0:
                         continue
-                    editor.selection[pt].tags.remove(s)
+                    if s in editor.selection[pt].tags:
+                        editor.selection[pt].tags.remove(s)
                 for m in editor.mirrorselect:
                     for pt in m:
-                        pt.tags.remove(s)
-            if editor.tagSelection>=len(editor.selection[0].tags):
-                editor.tagSelection=0
+                        if s in pt.tags:
+                            pt.tags.remove(s)
+        else:
+            editor.findpanename("pointer").objnames["tag"].contents=""
+        if editor.tagSelection>=len(editor.selection[0].tags):
+            editor.tagSelection=0
+        if editor.tagSelection<len(editor.selection[0].tags):
             editor.findpanename("pointer").objnames["tag"].contents=editor.selection[0].tags[editor.tagSelection]
         else:
             editor.findpanename("pointer").objnames["tag"].contents=""
+        if regen:
+            editor.rig.generateColliders()
 def addTag(editor,c):
     if c:
         s=editor.findpanename("pointer").objnames["tag"].contents
@@ -169,3 +177,5 @@ def addTag(editor,c):
                             pt.tags.append(s)
             editor.tagSelection=len(editor.selection[0].tags)-1
             editor.findpanename("pointer").objnames["tag"].contents=editor.selection[0].tags[editor.tagSelection]
+            if s=="collider":
+                editor.rig.generateColliders()

@@ -48,6 +48,10 @@ class PlayerInputManager:
                 r=-1
             if r>1:
                 r=1
-        out.append(r)#put output here
+        out.append(r)#rotation
+
+        mstate=pygame.mouse.get_pressed()
+        out.append(mstate[0])
+        out.append(mstate[2])
         
         return out

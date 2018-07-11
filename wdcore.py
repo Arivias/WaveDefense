@@ -29,6 +29,7 @@ class Ship:
         #9 max rotation speed deg/sec
         self.currentHealth=self.data[0]
         self.speed=[0,0,0]
+        self.weapons=[[],[]]#weapon slot 1, weapon slot 2
     def update(self,inputs,deltaTime):
         #0 x movement fraction -1 to 1
         #1 y movement fraction -1 to 1
@@ -100,13 +101,6 @@ class Ship:
             self.speed[0]=m_speedOld[0]+m_inputSpeed[0]*math.fabs(inputs[0])
             self.speed[1]=m_speedOld[1]+m_inputSpeed[1]*math.fabs(inputs[1])
         m_h=math.fabs(math.hypot(self.speed[0],self.speed[1]))
-        #if m_h>self.data[8]:#limiter
-        #    m_h=self.data[8]
-        #    angle=math.atan2(self.speed[1],self.speed[0])
-        #    x=m_h*math.cos(angle)
-        #    y=m_h*math.sin(angle)
-        #    self.speed[0]=math.copysign(x,self.speed[0])
-        #    self.speed[1]=math.copysign(y,self.speed[1])
             
         ##rotation
         self.speed[2]+=self.data[6]*inputs[2]*deltaTime
@@ -114,6 +108,14 @@ class Ship:
         if m_r>self.data[9]:
             m_r=self.data[9]
             self.speed[2]=math.copysign(m_r,self.speed[2])
+
+        ####weapons
+        for category in self.weapons:
+            for w in category:
+                w.tick(deltaTime)
+        if inputs[3]>0:
+            for w in self.weapons[0]:
+                w.fire()
 
         ####apply updates
         #print(self.speed[0])
@@ -125,6 +127,10 @@ class GameWorld:
     def __init__(self,radius):
         self.radius=radius
         self.rigs=[]
+        self.tickQueue=[]
+    def tick(self,deltaTime):
+        for obj in self.tickQueue:
+            obj.tick(deltaTime)
     def render(self,window,screenpos=[0,0],wscale=1):
         for rig in self.rigs:
             rig.screenpos=screenpos
@@ -132,11 +138,20 @@ class GameWorld:
             rig.render(window)
 class Projectile:
     def __init__(self):
+        self.rig=None
+    def tick(self,deltaTime):
         pass
 class Weapon:
-    def __init__(self,ship,category):
-        wpoints=[]
+    def __init__(self,name,ship,category,world):
+        self.ship=ship
+        self.world=world
+        self.name=name
+        self.wpoints=[]
         for pt in ship.rig.points:
             if category in pt.tags:
-                wpoints.append(pt)
+                self.wpoints.append(pt)
+        pass
+    def fire(self):
+        pass
+    def tick(self,deltaTime):
         pass

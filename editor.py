@@ -184,6 +184,8 @@ class TextBox(PaneObject):
         elif x.key==pygame.K_RETURN:
             self.func(self.contents)
             self.unclick()
+        elif x.key==pygame.K_TAB:
+            self.contents=""
         else:
             self.contents+=x.unicode
     def click(self):
