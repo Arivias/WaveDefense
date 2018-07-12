@@ -2,6 +2,11 @@ import pygame
 from pygame.locals import *
 import math
 
+class DummyInput:
+    def __init__(self):
+        pass
+    def getInputArray(self,deltaTime,state,ship):
+        return None
 
 class PlayerInputManager:
     def __init__(self):

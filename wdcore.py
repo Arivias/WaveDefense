@@ -128,6 +128,7 @@ class Ship:
     
     def damage(self,amount):
         self.currentHealth-=amount
+        print(self.currentHealth)
 
 class GameWorld:
     def __init__(self,radius):
@@ -136,6 +137,8 @@ class GameWorld:
         self.tickQueue=[]
         self.shipList=[]
         self.deleteQueue=[]
+        #self.grid=[[],[]]
+        #self.gridwidth=100
     def tick(self,deltaTime):
         for obj in self.tickQueue:
             obj.tick(deltaTime)
@@ -157,6 +160,7 @@ class GameWorld:
             self.deleteQueue.remove(obj)
     def render(self,window,screenpos=[0,0],wscale=1):
         pygame.draw.circle(window,(0,255,0),[int(-1*screenpos[0]*wscale),int(-1*screenpos[1]*wscale)],int(self.radius*wscale),1)
+        #grid?
         for rig in self.rigs:
             rig.screenpos=screenpos
             rig.wscale=wscale

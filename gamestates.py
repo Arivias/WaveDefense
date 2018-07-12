@@ -36,7 +36,7 @@ class TestState(wd.GameState):
 class EvoArenaState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.screenpos=[0,0]
+        self.screenpos=[-500,-400]
         self.wscale=1
         self.world=wd.GameWorld(2000)
         self.posVelocity=[0,0]
@@ -47,16 +47,24 @@ class EvoArenaState(wd.GameState):
         self.world.rigs=[self.world.shipList[0].rig]
         self.world.tickQueue=[self.world.shipList[0]]
         self.inputManagers=[inputmanagers.PlayerInputManager()]
+        self.world.shipList.append(wd.Ship("saves/ship4.json",game.data["player_ship"]["data"],"enemy"))
+        self.world.rigs.append(self.world.shipList[1].rig)
+        self.world.tickQueue.append(self.world.shipList[1])
+        self.inputManagers.append(inputmanagers.DummyInput())
 
         
     def loop(self,game,app,event):
         ##Pan camera
-        self.posVelocity[0]=self.world.shipList[0].rig.x-self.screenpos[0]
+        screenwidth=app.window.get_size()
+        self.posVelocity[0]=self.world.shipList[0].rig.x-(self.screenpos[0]+(screenwidth[0]/2)/self.wscale)
+        self.posVelocity[1]=self.world.shipList[0].rig.y-(self.screenpos[1]+(screenwidth[1]/2)/self.wscale)
         self.screenpos[0]+=self.posVelocity[0]*app.deltaTime
         self.screenpos[1]+=self.posVelocity[1]*app.deltaTime
         
         for ship in range(len(self.world.shipList)):
-            self.world.shipList[ship].input=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
+            ip=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
+            if ip!=None:
+                self.world.shipList[ship].input=ip
         self.world.tick(app.deltaTime)
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)
