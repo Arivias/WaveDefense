@@ -125,6 +125,9 @@ class Ship:
         self.rig.x+=self.speed[0]*deltaTime
         self.rig.y+=self.speed[1]*deltaTime
         self.rig.rotateBy(math.radians(self.speed[2])*deltaTime)
+    
+    def damage(self,amount):
+        self.currentHealth-=amount
 
 class GameWorld:
     def __init__(self,radius):
@@ -159,11 +162,11 @@ class GameWorld:
             rig.wscale=wscale
             rig.render(window)
 class Projectile:
-    def __init__(self,world,team,creator):
+    def __init__(self,world,team,ship):
         self.rig=None
         self.world=world
         self.team=team
-        self.creator=creator
+        self.ship=ship
     def tick(self,deltaTime):
         pass
 class Weapon:
