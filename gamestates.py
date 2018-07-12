@@ -3,7 +3,7 @@ import vecrig as vr
 from pygame.locals import *
 import math
 import wdcore as wd
-import playerinputmanager
+import inputmanagers
 import weapons
 
 class TestState(wd.GameState):
@@ -37,18 +37,21 @@ class EvoArenaState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
         self.screenpos=[0,0]
-        self.wscale=0.6
+        self.wscale=1
         self.world=wd.GameWorld(2000)
+        self.posVelocity=[0,0]
 
-        self.ti=playerinputmanager.PlayerInputManager()
+        ####Test stuff
+        self.world.shipList=[wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player")]
+        self.world.rigs=[self.world.shipList[0].rig]
+        self.world.tickQueue=[self.world.shipList[0]]
+        self.inputManagers=[inputmanagers.PlayerInputManager()]
 
-        self.tship=wd.Ship("saves/ship3.json",[1,10,1,5,150,100,270,180,20,720])
-        self.world.shipList.append(self.tship)
-        self.world.rigs.append(self.tship.rig)
-        self.world.tickQueue.append(self.tship)
         
     def loop(self,game,app,event):
-        self.tship.input=self.ti.getInputArray(app.deltaTime,self,self.tship)
+        ##Pan camera
+        for ship in range(len(self.world.shipList)):
+            self.world.shipList[ship].input=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
         self.world.tick(app.deltaTime)
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)

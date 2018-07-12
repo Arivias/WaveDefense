@@ -16,9 +16,10 @@ class GameState(ABC):
         pass
 
 class Ship:
-    def __init__(self,imgPath,shipData):
+    def __init__(self,imgPath,shipData,team):
         self.rig=vr.Rig(imgPath)
         self.data=shipData
+        self.team=team
         #0 float value of max health
         #1 forward acceleration rate px/sec2 #
         #2 backward acceleration rate px/sec2 #
@@ -158,9 +159,11 @@ class GameWorld:
             rig.wscale=wscale
             rig.render(window)
 class Projectile:
-    def __init__(self,world):
+    def __init__(self,world,team,creator):
         self.rig=None
         self.world=world
+        self.team=team
+        self.creator=creator
     def tick(self,deltaTime):
         pass
 class Weapon:

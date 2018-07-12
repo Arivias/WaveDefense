@@ -160,6 +160,16 @@ class Rig:
                                 break
                         if  not alreadyDone:
                             self.colliderSegments.append([pt,self.points[lk]])
+    def collidesWith(self,other):
+        if math.hypot(self.x-other.x,self.y-other.y)>self.collisionRadius+other.collisionRadius:
+            return False
+        for s1 in self.colliderSegments:
+            s1p=(s1[0].ptActual(self.x,self.y,self.scale,self.screenpos),s1[1].ptActual(self.x,self.y,self.scale,self.screenpos))
+            for s2 in other.colliderSegments:
+                s2p=(s2[0].ptActual(other.x,other.y,other.scale,other.screenpos),s2[1].ptActual(other.x,other.y,other.scale,other.screenpos))
+                if checkLineCollision(s1p[0],s1p[1],s2p[0],s2p[1]):
+                    return True
+        return False
 
 def orientation(p1,p2,p3):#https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
     val=(p2[1]-p1[1])*(p3[0]-p2[0])-(p2[0]-p1[0])*(p3[1]-p2[1])

@@ -642,6 +642,8 @@ class Editor:
         self.panes.append(pane)
     def save(self):
         name=self.findpanename("file").objnames["filename"].contents
+        self.rig.name=name
+        pygame.display.set_caption(self.rig.name+" - Vector Rig Editor")
         print(self.rig.toJson(name),file=open("saves/"+name+".json","w"))
     def findpanename(self,name):
         for pane in self.panes:
@@ -672,6 +674,7 @@ class Editor:
         self.selection=[]
         self.mirrorselect=([],[],[])
         self.selection_single=None
+        pygame.display.set_caption(self.rig.name+" - Vector Rig Editor")
         if len(self.rig.points)>0:
             return True
         return False

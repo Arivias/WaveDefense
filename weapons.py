@@ -26,7 +26,7 @@ class wp_PulseLaser(wdcore.Weapon):
 
 class p_Simple(wdcore.Projectile):
     def __init__(self,point,ship,path,speed,damage,color,world):
-        super().__init__(world)
+        super().__init__(world,ship.team,ship)
         self.speed=speed
         self.damage=damage
         self.rig=vecrig.Rig("Resources/Vector_Rigs/Projectiles/"+path)
@@ -42,4 +42,5 @@ class p_Simple(wdcore.Projectile):
             self.world.deleteQueue.append(self.rig)
         self.rig.x+=self.speed*math.cos(self.rig.rot-math.pi/2)*deltaTime
         self.rig.y+=self.speed*math.sin(self.rig.rot-math.pi/2)*deltaTime
+        #####TODO: damage enemies
         

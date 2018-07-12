@@ -6,10 +6,13 @@ import gamestates
 class Game:
     def __init__(self):
         #self.state=gamestates.MainMenu(self)
-        self.state=gamestates.EvoArenaState(self)
         self.keys=[]
         self.data={}###TODO: load from JSON
-        pass
+        self.data["player_ship"]={}
+        self.data["player_ship"]["path"]="saves/ship3.json"
+        self.data["player_ship"]["data"]=[1,10,1,5,150,100,270,180,20,720]
+        
+        self.state=gamestates.EvoArenaState(self)
 
     def loop(self,app,event):
         self.keys=pygame.key.get_pressed()

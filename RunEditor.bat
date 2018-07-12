@@ -1,2 +1,2 @@
 @echo off
-python RunEditor.py
+start pythonw RunEditor.pyw
