@@ -35,12 +35,17 @@ class p_Simple(wdcore.Projectile):
         self.rig.x=ship.rig.x+point.points[0]
         self.rig.y=ship.rig.y+point.points[1]
         self.rig.rotateTo(ship.rig.rot)
-        self.ship=ship
     def tick(self,deltaTime):
         if math.hypot(self.rig.x,self.rig.y)>self.world.radius:
             self.world.deleteQueue.append(self)
             self.world.deleteQueue.append(self.rig)
         self.rig.x+=self.speed*math.cos(self.rig.rot-math.pi/2)*deltaTime
         self.rig.y+=self.speed*math.sin(self.rig.rot-math.pi/2)*deltaTime
-        #####TODO: damage enemies
+        for ship in self.world.shipList:
+            if ship!=self.ship and ship.team!=self.ship.team:
+                if self.rig.collidesWith(ship.rig):
+                    self.world.deleteQueue.append(self.rig)
+                    self.world.deleteQueue.append(self)
+                    ship.damage(self.damage)
+                
         

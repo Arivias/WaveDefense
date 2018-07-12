@@ -43,6 +43,7 @@ class EvoArenaState(wd.GameState):
 
         ####Test stuff
         self.world.shipList=[wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player")]
+        self.world.shipList[0].weapons[0].append(weapons.wp_PulseLaser(self.world.shipList[0],10,"weapon1",self.world))
         self.world.rigs=[self.world.shipList[0].rig]
         self.world.tickQueue=[self.world.shipList[0]]
         self.inputManagers=[inputmanagers.PlayerInputManager()]
