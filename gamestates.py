@@ -9,15 +9,16 @@ import weapons
 class TestState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.screenpos=[-500,-500]
-        self.wscale=0.5
+        self.screenpos=[-1000,-500]
+        self.wscale=0.3
         self.s1=wd.Ship("saves/ship3.json",[1,10,1,5,150,100,270,180,20,720])
         self.s1.rig.y=10
         self.s1.rig.wscale=self.wscale
         self.s1.rig.screenpos=self.screenpos
-        self.world=wd.GameWorld(10000)
+        self.world=wd.GameWorld(800)
         self.s1.weapons[0].append(weapons.wp_PulseLaser(self.s1,10,"weapon1",self.world))
         self.inputman=playerinputmanager.PlayerInputManager()
+        self.world.shipList.append(self.s1)
         #self.debug=0
         
     def loop(self,game,app,event):
@@ -31,6 +32,26 @@ class TestState(wd.GameState):
         self.s1.rig.render(window)
         self.world.render(window,self.screenpos,self.wscale)
         pass
+
+class EvoArenaState(wd.GameState):
+    def __init__(self,game):
+        super().__init__(game)
+        self.screenpos=[0,0]
+        self.wscale=0.6
+        self.world=wd.GameWorld(2000)
+
+        self.ti=playerinputmanager.PlayerInputManager()
+
+        self.tship=wd.Ship("saves/ship3.json",[1,10,1,5,150,100,270,180,20,720])
+        self.world.shipList.append(self.tship)
+        self.world.rigs.append(self.tship.rig)
+        self.world.tickQueue.append(self.tship)
+        
+    def loop(self,game,app,event):
+        self.tship.input=self.ti.getInputArray(app.deltaTime,self,self.tship)
+        self.world.tick(app.deltaTime)
+    def render(self,window):
+        self.world.render(window,self.screenpos,self.wscale)
     
 class MainMenu(wd.GameState):
     def __init__(self,game):

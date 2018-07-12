@@ -6,7 +6,7 @@ import gamestates
 class Game:
     def __init__(self):
         #self.state=gamestates.MainMenu(self)
-        self.state=gamestates.TestState(self)
+        self.state=gamestates.EvoArenaState(self)
         self.keys=[]
         self.data={}###TODO: load from JSON
         pass

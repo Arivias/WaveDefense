@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import vecrig as vr
 import math
+import pygame
 
 class GameState(ABC):
     def __init__(self,game):
@@ -29,8 +30,9 @@ class Ship:
         #9 max rotation speed deg/sec
         self.currentHealth=self.data[0]
         self.speed=[0,0,0]
+        self.input=[0,0,0,0,0,0,0]
         self.weapons=[[],[]]#weapon slot 1, weapon slot 2
-    def update(self,inputs,deltaTime):
+    def tick(self,deltaTime):
         #0 x movement fraction -1 to 1
         #1 y movement fraction -1 to 1
         #2 rotation speed fraction -1 to 1
@@ -70,7 +72,7 @@ class Ship:
         ####inputs
 
         ##movement
-        m_worldAngle=math.atan2(inputs[1],inputs[0])+math.pi/2
+        m_worldAngle=math.atan2(self.input[1],self.input[0])+math.pi/2
         m_tAngle=(m_worldAngle-self.rig.rot)*-1
         m_total=0
         #forward
@@ -85,11 +87,11 @@ class Ship:
         m_segValue=self.data[3]*math.sin(m_tAngle)
         m_total+=math.fabs(m_segValue)
         m_inputSpeed=[m_total*math.sin(m_worldAngle),m_total*math.cos(m_worldAngle)]
-        m_inputSpeed[1]=math.copysign(m_inputSpeed[1],inputs[1])
+        m_inputSpeed[1]=math.copysign(m_inputSpeed[1],self.input[1])
 
         m_speedOld=[self.speed[0],self.speed[1]]
-        self.speed[0]+=m_inputSpeed[0]*math.fabs(inputs[0])
-        self.speed[1]+=m_inputSpeed[1]*math.fabs(inputs[1])
+        self.speed[0]+=m_inputSpeed[0]*math.fabs(self.input[0])
+        self.speed[1]+=m_inputSpeed[1]*math.fabs(self.input[1])
         
         m_h=math.hypot(self.speed[0],self.speed[1])
         m_max=m_total*self.data[8]
@@ -97,13 +99,13 @@ class Ship:
             m_total=m_max-math.hypot(m_speedOld[0],m_speedOld[1])
             m_total=max(m_total,0)
             m_inputSpeed=[m_total*math.sin(m_worldAngle),m_total*math.cos(m_worldAngle)]
-            m_inputSpeed[1]=math.copysign(m_inputSpeed[1],inputs[1])
-            self.speed[0]=m_speedOld[0]+m_inputSpeed[0]*math.fabs(inputs[0])
-            self.speed[1]=m_speedOld[1]+m_inputSpeed[1]*math.fabs(inputs[1])
+            m_inputSpeed[1]=math.copysign(m_inputSpeed[1],self.input[1])
+            self.speed[0]=m_speedOld[0]+m_inputSpeed[0]*math.fabs(self.input[0])
+            self.speed[1]=m_speedOld[1]+m_inputSpeed[1]*math.fabs(self.input[1])
         m_h=math.fabs(math.hypot(self.speed[0],self.speed[1]))
             
         ##rotation
-        self.speed[2]+=self.data[6]*inputs[2]*deltaTime
+        self.speed[2]+=self.data[6]*self.input[2]*deltaTime
         m_r=math.fabs(self.speed[2])
         if m_r>self.data[9]:
             m_r=self.data[9]
@@ -113,7 +115,7 @@ class Ship:
         for category in self.weapons:
             for w in category:
                 w.tick(deltaTime)
-        if inputs[3]>0:
+        if self.input[3]>0:
             for w in self.weapons[0]:
                 w.fire()
 
@@ -128,17 +130,37 @@ class GameWorld:
         self.radius=radius
         self.rigs=[]
         self.tickQueue=[]
+        self.shipList=[]
+        self.deleteQueue=[]
     def tick(self,deltaTime):
         for obj in self.tickQueue:
             obj.tick(deltaTime)
+        for ship in self.shipList:
+            if math.hypot(ship.rig.x,ship.rig.y)>self.radius:
+                angle=math.atan2(ship.rig.y,ship.rig.x)
+                ship.rig.x=self.radius*math.cos(angle)
+                ship.rig.y=self.radius*math.sin(angle)
+                ship.speed[0]*=math.sin(angle)
+                ship.speed[1]*=math.cos(angle)
+        for obj in self.deleteQueue:
+            if obj in self.shipList:
+                self.rigs.remove(obj.rig)
+                self.shipList.remove(obj)
+            if obj in self.rigs:
+                self.rigs.remove(obj)
+            if obj in self.tickQueue:
+                self.tickQueue.remove(obj)
+            self.deleteQueue.remove(obj)
     def render(self,window,screenpos=[0,0],wscale=1):
+        pygame.draw.circle(window,(0,255,0),[int(-1*screenpos[0]*wscale),int(-1*screenpos[1]*wscale)],int(self.radius*wscale),1)
         for rig in self.rigs:
             rig.screenpos=screenpos
             rig.wscale=wscale
             rig.render(window)
 class Projectile:
-    def __init__(self):
+    def __init__(self,world):
         self.rig=None
+        self.world=world
     def tick(self,deltaTime):
         pass
 class Weapon:
