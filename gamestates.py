@@ -50,6 +50,10 @@ class EvoArenaState(wd.GameState):
         
     def loop(self,game,app,event):
         ##Pan camera
+        self.posVelocity[0]=self.world.shipList[0].rig.x-self.screenpos[0]
+        self.screenpos[0]+=self.posVelocity[0]*app.deltaTime
+        self.screenpos[1]+=self.posVelocity[1]*app.deltaTime
+        
         for ship in range(len(self.world.shipList)):
             self.world.shipList[ship].input=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
         self.world.tick(app.deltaTime)
