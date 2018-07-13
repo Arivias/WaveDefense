@@ -71,7 +71,7 @@ class EvoAIInput:
         if copyFrom==None:
             self.hiddenSize=15
             self.numEyes=20
-            self.inputSize=self.numEyes*2+4 #eyes*2+forwardspeed+sidespeed+angvel+health
+            self.inputSize=self.numEyes*2+5 #eyes*2+forwardspeed+sidespeed+angvel+health+constant
             self.outputSize=7 #see ship inputs
             self.rayLength=4000
             
@@ -107,4 +107,29 @@ class EvoAIInput:
             inputs.append(closestTarget)
             
             eyeAng+=angSeparation
+
+        ###other inputs
+        #forward and strafe
+        i_angle=math.atan2(ship.speed[1],ship.speed[0])+math.pi/2
+        i_angle=ship.rig.rot-i_angle
+        i_xy=[0,0]
+        i_xy[0]=ship.speed[0]*math.cos(i_angle)-ship.speed[1]*math.sin(i_angle)
+        i_xy[1]=ship.speed[0]*math.sin(i_angle)+ship.speed[1]*math.cos(i_angle)
+        inputs.append(i_xy[0])
+        inputs.append(i_xy[1])
+        #rotation
+        inputs.append(ship.speed[2])
+        #health
+        inputs.append(ship.currentHealth/ship.data[0])
+        #constant
+        inputs.append(1)
+
+        ####calculate network
+        cw=0#current weight
+        hidden=[]
+        for _ in range(self.hiddenSize):
+            for i in range(len(self.numInputs))
+                h=0
+                h+=inputs[i]*self.weights[cw]
+        
         
