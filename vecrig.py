@@ -36,6 +36,7 @@ class Rig:
         self.screenpos=[0,0]
         self.colliderSegments=[]
         self.collisionRadius=0
+        self.segs = None
         if path!=None:
             try:
                 idata=json.loads(open(path).read())
@@ -53,6 +54,7 @@ class Rig:
         else:
             pass
 
+        
     def render(self,window,color=None):
         #if self.collisionRadius>1:#show collisionRadius circles
         #    pygame.draw.circle(window,(0,255,255),(int(self.x),int(self.y)),int(self.collisionRadius),1)
@@ -160,6 +162,7 @@ class Rig:
                                 break
                         if  not alreadyDone:
                             self.colliderSegments.append([pt,self.points[lk]])
+        self.segs = [None] * len(self.colliderSegments)
     def collidesWith(self,other):
         if math.hypot(self.x-other.x,self.y-other.y)>self.collisionRadius+other.collisionRadius:
             return False
@@ -171,28 +174,29 @@ class Rig:
                     return True
         return False
     def raycast(self,ray):#ray is ((a,b),(c,d))
-        segs=[]
-        for s1 in self.colliderSegments:
+        for i, s1 in enumerate(self.colliderSegments):
+            self.segs[i]=None
             s1p=(s1[0].ptActual(self.x,self.y,self.scale),s1[1].ptActual(self.x,self.y,self.scale))
             if checkLineCollision(s1p[0],s1p[1],ray[0],ray[1]):
-                segs.append(s1p)
+                self.segs[i]=s1p
         closest=None
-        for seg in segs:
-            try:
-                m1=(ray[1][1]-ray[0][1])/(ray[1][0]-ray[0][0])
-            except Exception:
-                m1=ray[1][1]-ray[0][1]
-            b1=ray[0][1]-m1*ray[0][0]
-            try:
-                m2=(seg[1][1]-seg[0][1])/(seg[1][0]-seg[0][0])
-            except Exception:
-                m2=seg[1][1]-seg[0][1]
-            b2=seg[0][1]-m2*seg[0][0]
-            x=(b2-b1)/(m1-m2)
-            y=m1*x+ray[0][1]
-            d=math.hypot(ray[0][0]-x,ray[0][1]-y)
-            if closest==None or d<closest:
-                closest=d
+        for seg in self.segs:
+            if seg:
+                try:
+                    m1=(ray[1][1]-ray[0][1])/(ray[1][0]-ray[0][0])
+                except Exception:
+                    m1=ray[1][1]-ray[0][1]
+                b1=ray[0][1]-m1*ray[0][0]
+                try:
+                    m2=(seg[1][1]-seg[0][1])/(seg[1][0]-seg[0][0])
+                except Exception:
+                    m2=seg[1][1]-seg[0][1]
+                b2=seg[0][1]-m2*seg[0][0]
+                x=(b2-b1)/(m1-m2)
+                y=m1*x+ray[0][1]
+                d=math.hypot(ray[0][0]-x,ray[0][1]-y)
+                if closest==None or d<closest:
+                    closest=d
         return closest
 
 def orientation(p1,p2,p3):#https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/

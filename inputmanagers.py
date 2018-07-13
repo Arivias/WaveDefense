@@ -67,7 +67,10 @@ class PlayerInputManager:
         return out
 
 class EvoAIInput:
-    def __init__(self,copyFrom=None):
+    def __init__(self,copyFrom=None,mutationRate=3,mutationMagnitude=0.1):
+        self.score=0
+        self.lastRaycast=0
+        self.lastEyes=None
         if copyFrom==None:
             self.hiddenSize=15
             self.numEyes=20
@@ -78,35 +81,59 @@ class EvoAIInput:
             self.weights=[]
             for _ in range(self.hiddenSize*self.inputSize+self.hiddenSize*self.outputSize):
                 self.weights.append(random.randint(-100,100)/100)
+        else:
+            self.hiddenSize=copyFrom.hiddenSize
+            self.numEyes=copyFrom.numEyes
+            self.inputSize=copyFrom.inputSize
+            self.outputSize=copyFrom.outputSize
+            self.rayLength=copyFrom.rayLength
+            
+            self.weights=[]
+            for w in copyFrom.weights:
+                if random.randint(1,mutationRate)==1:
+                    w+=random.randint(-100,100)/100*mutationMagnitude
+                self.weights.append(w)
     def getInputArray(self,deltaTime,state,ship):
         inputs=[]
         angSeparation=math.pi*2
         angSeparation/=self.numEyes
         eyeAng=ship.rig.rot
+        eyepos=1
+        if self.lastRaycast<=0:
+            self.lastEyes=[]
         for i in range(self.numEyes):######Look through eyes
-            orayEnd=[self.rayLength,0]
-            rayEnd=[0,0]
-            rayEnd[0]=orayEnd[0]*math.cos(eyeAng)-orayEnd[1]*math.sin(eyeAng)
-            rayEnd[1]=orayEnd[0]*math.sin(eyeAng)+orayEnd[1]*math.cos(eyeAng)
-            rayEnd=[rayEnd[0]+ship.rig.x,rayEnd[1]+ship.rig.y]
-            closestTarget=ship.world.radius*2
-            for s in ship.world.shipList:#search ships
-                if s.team!=ship.team:
-                    d=s.rig.raycast(((ship.rig.x,ship.rig.y),(rayEnd[0],rayEnd[1])))
-                    if d!=None:
-                        if d<closestTarget:
-                            closestTarget=d
-            inputs.append(closestTarget)
-            closestTarget=ship.world.radius*2
-            for obj in ship.world.tickQueue:#search projectiles
-                if isinstance(obj,wdcore.Projectile):
-                    d=obj.rig.raycast(((ship.rig.x,ship.rig.y),(rayEnd[0],rayEnd[1])))
-                    if d!=None:
-                        if d<closestTarget:
-                            closestTarget=d
-            inputs.append(closestTarget)
+            if self.lastRaycast<=0:
+                orayEnd=[self.rayLength,0]
+                rayEnd=[0,0]
+                rayEnd[0]=orayEnd[0]*math.cos(eyeAng)-orayEnd[1]*math.sin(eyeAng)
+                rayEnd[1]=orayEnd[0]*math.sin(eyeAng)+orayEnd[1]*math.cos(eyeAng)
+                rayEnd=[rayEnd[0]+ship.rig.x,rayEnd[1]+ship.rig.y]
+                closestTarget=ship.world.radius*2
+                for s in ship.world.shipList:#search ships
+                    if s.team!=ship.team:
+                        d=s.rig.raycast(((ship.rig.x,ship.rig.y),(rayEnd[0],rayEnd[1])))
+                        if d!=None:
+                            if d<closestTarget:
+                                closestTarget=d
+                inputs.append(closestTarget)
+                self.lastEyes.append(closestTarget)
+                closestTarget=ship.world.radius*2
+                for obj in ship.world.tickQueue:#search projectiles
+                    if isinstance(obj,wdcore.Projectile):
+                        d=obj.rig.raycast(((ship.rig.x,ship.rig.y),(rayEnd[0],rayEnd[1])))
+                        if d!=None:
+                            if d<closestTarget:
+                                closestTarget=d
+                inputs.append(closestTarget)
+                self.lastEyes.append(closestTarget)
             
             eyeAng+=angSeparation
+        if self.lastRaycast>0:
+            for i in range(self.numEyes*2):
+                inputs.append(self.lastEyes[i])
+        if self.lastRaycast<=0:
+            self.lastRaycast=0#####raycast frame limiter
+        self.lastRaycast-=1
 
         ###other inputs
         #forward and strafe
@@ -128,8 +155,28 @@ class EvoAIInput:
         cw=0#current weight
         hidden=[]
         for _ in range(self.hiddenSize):
-            for i in range(len(self.numInputs))
-                h=0
+            h=0
+            for i in range(self.inputSize):
                 h+=inputs[i]*self.weights[cw]
+                cw+=1
+            hidden.append(h)
+        outputs=[]
+        for _ in range(self.outputSize):
+            h=0
+            for i in range(self.hiddenSize):
+                h+=hidden[i]*self.weights[cw]
+                cw+=1
+            outputs.append(h)
+
+        ##rotate movement
+        newMovement=[0,0]
+        newMovement[0]=outputs[0]*math.cos(-1*i_angle)-outputs[1]*math.sin(-1*i_angle)
+        newMovement[1]=outputs[0]*math.sin(-1*i_angle)+outputs[1]*math.cos(-1*i_angle)
+        outputs[0]=newMovement[0]
+        outputs[1]=newMovement[1]
+        for i in range(len(outputs)):#limit outputs with tanh
+            outputs[i]=math.tanh(outputs[i])
+        return outputs
+                
         
         

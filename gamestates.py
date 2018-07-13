@@ -36,30 +36,100 @@ class TestState(wd.GameState):
 class EvoArenaState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.screenpos=[-500,-400]
-        self.wscale=0.4
+        self.wscale=0.12
+        self.screenpos=[(-960/2)/self.wscale,(-540/2)/self.wscale]
         self.world=wd.GameWorld(2000)
         self.posVelocity=[0,0]
+        self.inputManagers=[]
+        self.panTarget=-1
+        self.scores=[]
+        self.maxTime=10
+        self.cTime=0
+        self.currentGeneration=0
 
         ####Test stuff
-        self.world.shipList=[wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player",self.world)]
-        self.world.shipList[0].weapons[0].append(weapons.wp_PulseLaser(self.world.shipList[0],3,"weapon1",self.world))
-        self.world.rigs=[self.world.shipList[0].rig]
-        self.world.tickQueue=[self.world.shipList[0]]
-        self.inputManagers=[inputmanagers.PlayerInputManager()]
-        self.world.shipList.append(wd.Ship("saves/ship4.json",game.data["player_ship"]["data"],"enemy",self.world))
-        self.world.rigs.append(self.world.shipList[1].rig)
-        self.world.tickQueue.append(self.world.shipList[1])
-        self.inputManagers.append(inputmanagers.EvoAIInput())
+        #self.world.shipList=[wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"player",self.world)]
+        #self.world.shipList[0].weapons[0].append(weapons.wp_PulseLaser(self.world.shipList[0],3,"weapon1",self.world))
+        #self.world.rigs=[self.world.shipList[0].rig]
+        #self.world.tickQueue=[self.world.shipList[0]]
+        #self.inputManagers=[inputmanagers.PlayerInputManager()]
+        #self.world.shipList.append(wd.Ship("saves/ship4.json",game.data["player_ship"]["data"],"enemy",self.world))
+        #self.world.rigs.append(self.world.shipList[1].rig)
+        #self.world.tickQueue.append(self.world.shipList[1])
+        #self.world.shipList[1].weapons[0].append(weapons.wp_PulseLaser(self.world.shipList[1],0,"weapon1",self.world))
+        #self.inputManagers.append(inputmanagers.EvoAIInput())
+        #self.world.shipList[1].aiControllerCallback=self.inputManagers[1]
 
+        self.numShips=6
+        self.controllers=[]
+        angle=0
+        angleInc=math.pi*2/self.numShips
+        for i in range(self.numShips):
+            pos=[self.world.radius*0.75,0]
+            sp=[0,0]
+            sp[0]=pos[0]*math.cos(angle)-pos[1]*math.sin(angle)
+            sp[1]=pos[0]*math.sin(angle)+pos[1]*math.cos(angle)
+            s=wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"enemy"+str(i),self.world)
+            s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
+            s.rig.x=sp[0]
+            s.rig.y=sp[1]
+            i=inputmanagers.EvoAIInput()
+            s.aiControllerCallback=i
+            self.inputManagers.append(i)
+            self.world.shipList.append(s)
+            self.world.rigs.append(s.rig)
+            self.world.tickQueue.append(s)
+            angle+=angleInc
         
     def loop(self,game,app,event):
+        self.cTime+=app.deltaTime
+        if len(self.world.shipList)<=1 or self.cTime>=self.maxTime:
+            self.cTime=0
+            angle=0
+            angleInc=math.pi*2/self.numShips
+            for i in range(len(self.inputManagers)):
+                self.scores.append((self.inputManagers[i].score,self.inputManagers[i]))
+            bestScore=self.scores[0][0]
+            bi=0
+            for i in range(len(self.scores)):
+                if self.scores[i][0]>bestScore:
+                    bestScore=self.scores[i][0]
+                    bi=i
+            self.world.shipList=[]
+            self.world.tickQueue=[]
+            self.world.rigs=[]
+            self.inputManagers=[]
+            for i in range(self.numShips):
+                pos=[self.world.radius*0.75,0]
+                sp=[0,0]
+                sp[0]=pos[0]*math.cos(angle)-pos[1]*math.sin(angle)
+                sp[1]=pos[0]*math.sin(angle)+pos[1]*math.cos(angle)
+                s=wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"enemy"+str(i),self.world)
+                s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
+                s.rig.x=sp[0]
+                s.rig.y=sp[1]
+                i=inputmanagers.EvoAIInput()
+                s.aiControllerCallback=i
+                self.inputManagers.append(i)
+                self.world.shipList.append(s)
+                self.world.rigs.append(s.rig)
+                self.world.tickQueue.append(s)
+                angle+=angleInc
+            self.scores=[]
+            
+            print(str(self.currentGeneration)+": "+str(bestScore))
+            self.currentGeneration+=1
+        
+            
         ##Pan camera
-        screenwidth=app.window.get_size()
-        self.posVelocity[0]=self.world.shipList[0].rig.x-(self.screenpos[0]+(screenwidth[0]/2)/self.wscale)
-        self.posVelocity[1]=self.world.shipList[0].rig.y-(self.screenpos[1]+(screenwidth[1]/2)/self.wscale)
-        self.screenpos[0]+=self.posVelocity[0]*app.deltaTime
-        self.screenpos[1]+=self.posVelocity[1]*app.deltaTime
+        if self.panTarget!=-1:
+            screenwidth=app.window.get_size()
+            self.posVelocity[0]=self.world.shipList[self.panTarget].rig.x-(self.screenpos[0]+(screenwidth[0]/2)/self.wscale)
+            self.posVelocity[1]=self.world.shipList[self.panTarget].rig.y-(self.screenpos[1]+(screenwidth[1]/2)/self.wscale)
+            self.screenpos[0]+=self.posVelocity[0]*app.deltaTime
+            self.screenpos[1]+=self.posVelocity[1]*app.deltaTime
+        else:
+            self.posVelocity=[0,0]
         
         for ship in range(len(self.world.shipList)):
             ip=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
@@ -70,6 +140,7 @@ class EvoArenaState(wd.GameState):
             newInputs=[]
             for i in range(len(self.inputManagers)):
                 if i in delList:
+                    self.scores.append((self.inputManagers[i].score,self.inputManagers[i]))
                     continue
                 newInputs.append(self.inputManagers[i])
             self.inputManagers=newInputs

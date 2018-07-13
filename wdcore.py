@@ -21,6 +21,7 @@ class Ship:
         self.world=world
         self.data=shipData
         self.team=team
+        self.aiControllerCallback=None
         #0 float value of max health
         #1 forward acceleration rate px/sec2 #
         #2 backward acceleration rate px/sec2 #
@@ -131,6 +132,8 @@ class Ship:
         self.currentHealth-=amount
         if self.currentHealth<=0:
             self.world.deleteQueue.append(self)
+        if self.aiControllerCallback!=None:
+            self.aiControllerCallback.score-=amount/2
 
 class GameWorld:
     def __init__(self,radius):
@@ -179,6 +182,9 @@ class Projectile:
         self.ship=ship
     def tick(self,deltaTime):
         pass
+    def rewardCreator(self,val):
+        if self.ship.aiControllerCallback!=None:
+            self.ship.aiControllerCallback.score+=val
 class Weapon:
     def __init__(self,name,ship,category,world):
         self.ship=ship
