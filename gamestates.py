@@ -37,17 +37,17 @@ class EvoArenaState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
         self.screenpos=[-500,-400]
-        self.wscale=1
+        self.wscale=0.4
         self.world=wd.GameWorld(2000)
         self.posVelocity=[0,0]
 
         ####Test stuff
-        self.world.shipList=[wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player")]
-        self.world.shipList[0].weapons[0].append(weapons.wp_PulseLaser(self.world.shipList[0],10,"weapon1",self.world))
+        self.world.shipList=[wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player",self.world)]
+        self.world.shipList[0].weapons[0].append(weapons.wp_PulseLaser(self.world.shipList[0],3,"weapon1",self.world))
         self.world.rigs=[self.world.shipList[0].rig]
         self.world.tickQueue=[self.world.shipList[0]]
         self.inputManagers=[inputmanagers.PlayerInputManager()]
-        self.world.shipList.append(wd.Ship("saves/ship4.json",game.data["player_ship"]["data"],"enemy"))
+        self.world.shipList.append(wd.Ship("saves/ship4.json",game.data["player_ship"]["data"],"enemy",self.world))
         self.world.rigs.append(self.world.shipList[1].rig)
         self.world.tickQueue.append(self.world.shipList[1])
         self.inputManagers.append(inputmanagers.DummyInput())

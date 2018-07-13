@@ -10,7 +10,7 @@ class Game:
         self.data={}###TODO: load from JSON
         self.data["player_ship"]={}
         self.data["player_ship"]["path"]="saves/ship3.json"
-        self.data["player_ship"]["data"]=[1,10,1,5,150,100,270,180,20,720]
+        self.data["player_ship"]["data"]=[10,10,1,5,150,100,270,180,20,720]
         
         self.state=gamestates.EvoArenaState(self)
 

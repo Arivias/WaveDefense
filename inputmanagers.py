@@ -42,10 +42,13 @@ class PlayerInputManager:
             a=a3
 
         r=0
-        if False:
-            if math.fabs(a)<((math.radians(ship.speed[2]**2)))/(2*math.radians(ship.data[6]+ship.data[7])):
+        if False:#50/50 rotator
+            #print(math.fabs(a)+0.2-((math.radians(ship.speed[2]**2)))/(2*math.radians(ship.data[6]+ship.data[7])))
+            if math.fabs(a)+0.2<=((math.radians(ship.speed[2]**2)))/(2*math.radians(ship.data[6]+ship.data[7])):
+                print("a")
                 r=math.copysign(1,-1*a)
             else:
+                print("b")
                 r=math.copysign(1,a)
         else:
             r=(a/ship.data[6])*proportionality
@@ -60,3 +63,9 @@ class PlayerInputManager:
         out.append(mstate[2])
         
         return out
+
+class EvoAIInput:
+    def __input__(self,copyFrom=None):
+        pass
+    def getInputArray(self,deltaTime,state,ship):
+        pass

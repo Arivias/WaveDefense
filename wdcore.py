@@ -16,8 +16,9 @@ class GameState(ABC):
         pass
 
 class Ship:
-    def __init__(self,imgPath,shipData,team):
+    def __init__(self,imgPath,shipData,team,world):
         self.rig=vr.Rig(imgPath)
+        self.world=world
         self.data=shipData
         self.team=team
         #0 float value of max health
@@ -128,7 +129,8 @@ class Ship:
     
     def damage(self,amount):
         self.currentHealth-=amount
-        print(self.currentHealth)
+        if self.currentHealth<=0:
+            self.world.deleteQueue.append(self)
 
 class GameWorld:
     def __init__(self,radius):
