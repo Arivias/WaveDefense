@@ -173,14 +173,20 @@ class Rig:
     def raycast(self,ray):#ray is ((a,b),(c,d))
         segs=[]
         for s1 in self.colliderSegments:
-            s1p=(s1[0].ptActual(self.x,self.y,self.scale,self.screenpos),s1[1].ptActual(self.x,self.y,self.scale,self.screenpos))
+            s1p=(s1[0].ptActual(self.x,self.y,self.scale),s1[1].ptActual(self.x,self.y,self.scale))
             if checkLineCollision(s1p[0],s1p[1],ray[0],ray[1]):
                 segs.append(s1p)
         closest=None
         for seg in segs:
-            m1=(ray[1][1]-ray[0][1])/(ray[1][0]-ray[0][0])
+            try:
+                m1=(ray[1][1]-ray[0][1])/(ray[1][0]-ray[0][0])
+            except Exception:
+                m1=ray[1][1]-ray[0][1]
             b1=ray[0][1]-m1*ray[0][0]
-            m2=(seg[1][1]-seg[0][1])/(seg[1][0]-seg[0][0])
+            try:
+                m2=(seg[1][1]-seg[0][1])/(seg[1][0]-seg[0][0])
+            except Exception:
+                m2=seg[1][1]-seg[0][1]
             b2=seg[0][1]-m2*seg[0][0]
             x=(b2-b1)/(m1-m2)
             y=m1*x+ray[0][1]

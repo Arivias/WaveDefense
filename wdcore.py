@@ -151,15 +151,19 @@ class GameWorld:
                 ship.rig.y=self.radius*math.sin(angle)
                 ship.speed[0]*=math.sin(angle)
                 ship.speed[1]*=math.cos(angle)
-        for obj in self.deleteQueue:
-            if obj in self.shipList:
-                self.rigs.remove(obj.rig)
-                self.shipList.remove(obj)
-            if obj in self.rigs:
-                self.rigs.remove(obj)
-            if obj in self.tickQueue:
-                self.tickQueue.remove(obj)
-            self.deleteQueue.remove(obj)
+        delList=[]
+        for obj in range(len(self.deleteQueue)):
+            if self.deleteQueue[obj] in self.shipList:
+                self.rigs.remove(self.deleteQueue[obj].rig)
+                self.shipList.remove(self.deleteQueue[obj])
+                self.tickQueue.remove(self.deleteQueue[obj])
+                delList.append(obj)
+            if self.deleteQueue[obj] in self.rigs:
+                self.rigs.remove(self.deleteQueue[obj])
+            if self.deleteQueue[obj] in self.tickQueue:
+                self.tickQueue.remove(self.deleteQueue[obj])
+        self.deleteQueue=[]
+        return delList
     def render(self,window,screenpos=[0,0],wscale=1):
         pygame.draw.circle(window,(0,255,0),[int(-1*screenpos[0]*wscale),int(-1*screenpos[1]*wscale)],int(self.radius*wscale),1)
         #grid?

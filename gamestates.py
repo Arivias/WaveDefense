@@ -50,7 +50,7 @@ class EvoArenaState(wd.GameState):
         self.world.shipList.append(wd.Ship("saves/ship4.json",game.data["player_ship"]["data"],"enemy",self.world))
         self.world.rigs.append(self.world.shipList[1].rig)
         self.world.tickQueue.append(self.world.shipList[1])
-        self.inputManagers.append(inputmanagers.DummyInput())
+        self.inputManagers.append(inputmanagers.EvoAIInput())
 
         
     def loop(self,game,app,event):
@@ -65,7 +65,15 @@ class EvoArenaState(wd.GameState):
             ip=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
             if ip!=None:
                 self.world.shipList[ship].input=ip
-        self.world.tick(app.deltaTime)
+        delList=self.world.tick(app.deltaTime)
+        if len(delList)>0:
+            newInputs=[]
+            for i in range(len(self.inputManagers)):
+                if i in delList:
+                    continue
+                newInputs.append(self.inputManagers[i])
+            self.inputManagers=newInputs
+                
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)
     

@@ -1,8 +1,10 @@
 import pygame
 from pygame.locals import *
 import math
+import random
+import wdcore
 
-class DummyInput:
+class DummyInputManager:
     def __init__(self):
         pass
     def getInputArray(self,deltaTime,state,ship):
@@ -65,7 +67,44 @@ class PlayerInputManager:
         return out
 
 class EvoAIInput:
-    def __input__(self,copyFrom=None):
-        pass
+    def __init__(self,copyFrom=None):
+        if copyFrom==None:
+            self.hiddenSize=15
+            self.numEyes=20
+            self.inputSize=self.numEyes*2+4 #eyes*2+forwardspeed+sidespeed+angvel+health
+            self.outputSize=7 #see ship inputs
+            self.rayLength=4000
+            
+            self.weights=[]
+            for _ in range(self.hiddenSize*self.inputSize+self.hiddenSize*self.outputSize):
+                self.weights.append(random.randint(-100,100)/100)
     def getInputArray(self,deltaTime,state,ship):
-        pass
+        inputs=[]
+        angSeparation=math.pi*2
+        angSeparation/=self.numEyes
+        eyeAng=ship.rig.rot
+        for i in range(self.numEyes):######Look through eyes
+            orayEnd=[self.rayLength,0]
+            rayEnd=[0,0]
+            rayEnd[0]=orayEnd[0]*math.cos(eyeAng)-orayEnd[1]*math.sin(eyeAng)
+            rayEnd[1]=orayEnd[0]*math.sin(eyeAng)+orayEnd[1]*math.cos(eyeAng)
+            rayEnd=[rayEnd[0]+ship.rig.x,rayEnd[1]+ship.rig.y]
+            closestTarget=ship.world.radius*2
+            for s in ship.world.shipList:#search ships
+                if s.team!=ship.team:
+                    d=s.rig.raycast(((ship.rig.x,ship.rig.y),(rayEnd[0],rayEnd[1])))
+                    if d!=None:
+                        if d<closestTarget:
+                            closestTarget=d
+            inputs.append(closestTarget)
+            closestTarget=ship.world.radius*2
+            for obj in ship.world.tickQueue:#search projectiles
+                if isinstance(obj,wdcore.Projectile):
+                    d=obj.rig.raycast(((ship.rig.x,ship.rig.y),(rayEnd[0],rayEnd[1])))
+                    if d!=None:
+                        if d<closestTarget:
+                            closestTarget=d
+            inputs.append(closestTarget)
+            
+            eyeAng+=angSeparation
+        
