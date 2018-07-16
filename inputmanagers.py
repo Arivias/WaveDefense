@@ -73,7 +73,7 @@ class EvoAIInput:
         self.lastEyes=None
         if copyFrom==None:
             self.hiddenSize=10
-            self.numEyes=10
+            self.numEyes=3
             self.inputSize=self.numEyes*2+5 #eyes*2+forwardspeed+sidespeed+angvel+health+constant
             self.outputSize=7 #see ship inputs
             self.rayLength=4000
