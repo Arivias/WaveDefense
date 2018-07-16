@@ -80,7 +80,7 @@ class EvoArenaState(wd.GameState):
             s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
             s.rig.x=sp[0]
             s.rig.y=sp[1]
-            s.rig.rot=math.pi*2*random.randint(0,100)/100
+            s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
             i=inputmanagers.EvoAIInput()
             s.aiControllerCallback=i
             self.inputManagers.append(i)
@@ -121,7 +121,7 @@ class EvoArenaState(wd.GameState):
                 s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
                 s.rig.x=sp[0]
                 s.rig.y=sp[1]
-                s.rig.rot=math.pi*2*random.randint(0,100)/100
+                s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
                 if self.halfMode:
                     net=self.bestScore[cb][1]
                     if cu==1:
