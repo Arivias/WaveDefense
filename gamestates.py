@@ -62,11 +62,12 @@ class EvoArenaState(wd.GameState):
         #self.world.shipList[1].aiControllerCallback=self.inputManagers[1]
 
         self.numShips=2
-        self.halfMode=True
+        self.halfMode=False
         self.controllers=[]
         angle=0
         angleInc=math.pi*2/self.numShips
         startNetwork=None
+        self.prev=None
         if "best_network" in game.data:
             startNetwork=game.data["best_network"]
         if "current_generation" in game.data:
@@ -122,15 +123,10 @@ class EvoArenaState(wd.GameState):
                 s.rig.x=sp[0]
                 s.rig.y=sp[1]
                 s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
-                if self.halfMode:
-                    net=self.bestScore[cb][1]
-                    if cu==1:
-                        cu=0
-                        cb+=1
-                    else:
-                        cu+=1
-                else:
-                    net=self.scores[bi][1]
+                net=self.scores[bi][1]
+                if i==1:
+                    net=self.prev
+                self.prev=self.scores[bi][1]
                 i=inputmanagers.EvoAIInput(net)
                 s.aiControllerCallback=i
                 self.inputManagers.append(i)
@@ -146,12 +142,12 @@ class EvoArenaState(wd.GameState):
                     game.data["best_network"]=self.scores[bi][1].weights
                 game.data["current_generation"]=self.currentGeneration
                 game.save()
-            self.scores=[]
 
             if self.halfMode:
                 print(str(self.currentGeneration)+": "+str(self.bestScore[len(self.bestScore)-1][0]))
             else:
                 print(str(self.currentGeneration)+": "+str(self.scores[bi][0]))
+            self.scores=[]
             self.currentGeneration+=1
         
             
