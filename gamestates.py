@@ -65,6 +65,11 @@ class EvoArenaState(wd.GameState):
         self.controllers=[]
         angle=0
         angleInc=math.pi*2/self.numShips
+        startNetwork=None
+        if "best_network" in game.data:
+            startNetwork=game.data["best_network"]
+        if "current_generation" in game.data:
+            self.currentGeneration=game.data["current_generation"]
         for i in range(self.numShips):
             pos=[self.world.radius*0.75,0]
             sp=[0,0]
@@ -120,6 +125,11 @@ class EvoArenaState(wd.GameState):
                 self.world.rigs.append(s.rig)
                 self.world.tickQueue.append(s)
                 angle+=angleInc
+
+            if self.currentGeneration%2==0:####save frequency
+                game.data["best_network"]=self.scores[bi][1].weights
+                game.data["current_generation"]=self.currentGeneration
+                game.save()
             self.scores=[]
             
             print(str(self.currentGeneration)+": "+str(bestScore))#[len(bestScore)-1][0]))
