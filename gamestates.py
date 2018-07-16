@@ -4,6 +4,7 @@ from pygame.locals import *
 import math
 import wdcore as wd
 import inputmanagers
+import ai_controller
 import weapons
 import random
 
@@ -81,7 +82,7 @@ class EvoArenaState(wd.GameState):
             s.rig.x=sp[0]
             s.rig.y=sp[1]
             s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
-            i=inputmanagers.EvoAIInput()
+            i=ai_controller.AIController()
             s.aiControllerCallback=i
             self.inputManagers.append(i)
             self.world.shipList.append(s)
@@ -131,7 +132,7 @@ class EvoArenaState(wd.GameState):
                         cu+=1
                 else:
                     net=self.scores[bi][1]
-                i=inputmanagers.EvoAIInput(net)
+                i=ai_controller.AIController()#this just randomizes it
                 s.aiControllerCallback=i
                 self.inputManagers.append(i)
                 self.world.shipList.append(s)
@@ -139,7 +140,7 @@ class EvoArenaState(wd.GameState):
                 self.world.tickQueue.append(s)
                 angle+=angleInc
 
-            if self.currentGeneration%2==0:####save frequency
+            if self.currentGeneration%2==0 and False:####save frequency ######disabled
                 if self.halfMode:
                     game.data["best_network"]=self.bestScore[len(self.bestScore)-1][1].weights
                 else:

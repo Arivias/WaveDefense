@@ -98,7 +98,6 @@ class EvoAIInput:
         angSeparation=math.pi*2
         angSeparation/=self.numEyes
         eyeAng=ship.rig.rot
-        eyepos=1
         if self.lastRaycast<=0:
             self.lastEyes=[]
         for i in range(self.numEyes):######Look through eyes
