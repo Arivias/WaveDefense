@@ -37,14 +37,14 @@ class TestState(wd.GameState):
 class EvoArenaState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.wscale=0.25
+        self.wscale=0.15
         self.screenpos=[(-960/2)/self.wscale,(-540/2)/self.wscale]
-        self.world=wd.GameWorld(1000)
+        self.world=wd.GameWorld(2000)
         self.posVelocity=[0,0]
         self.inputManagers=[]
         self.panTarget=-1
         self.scores=[]
-        self.maxTime=10
+        self.maxTime=20
         self.cTime=0
         self.currentGeneration=0
 
@@ -97,6 +97,8 @@ class EvoArenaState(wd.GameState):
                 if self.scores[i][0]>bestScore:
                     bestScore=self.scores[i][0]
                     bi=i
+            #bestScore=self.msortScores(self.scores)
+            ########
             self.world.shipList=[]
             self.world.tickQueue=[]
             self.world.rigs=[]
@@ -111,7 +113,7 @@ class EvoArenaState(wd.GameState):
                 s.rig.x=sp[0]
                 s.rig.y=sp[1]
                 s.rig.rot=math.pi*2*random.randint(0,100)/100
-                i=inputmanagers.EvoAIInput()
+                i=inputmanagers.EvoAIInput(self.scores[bi][1])
                 s.aiControllerCallback=i
                 self.inputManagers.append(i)
                 self.world.shipList.append(s)
@@ -120,7 +122,7 @@ class EvoArenaState(wd.GameState):
                 angle+=angleInc
             self.scores=[]
             
-            print(str(self.currentGeneration)+": "+str(bestScore))
+            print(str(self.currentGeneration)+": "+str(bestScore))#[len(bestScore)-1][0]))
             self.currentGeneration+=1
         
             
@@ -150,6 +152,23 @@ class EvoArenaState(wd.GameState):
                 
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)
+    def msortScores(self,scores):
+        if len(scores)<=1:
+            return scores
+        else:
+            s1=self.msortScores(scores[:int(len(scores)/2)])
+            s2=self.msortScores(scores[int(len(scores)/2):])
+            out=[]
+            while len(s1)!=0 and len(s2)!=0:
+                if s1[0][0]>s2[0][0]:
+                    out.append(s2.pop(0))
+                else:
+                    out.append(s1.pop(0))
+            for s in s1:
+                out.append(s)
+            for s in s2:
+                out.append(s)
+            return out
     
 class MainMenu(wd.GameState):
     def __init__(self,game):

@@ -133,7 +133,7 @@ class Ship:
         if self.currentHealth<=0:
             self.world.deleteQueue.append(self)
         if self.aiControllerCallback!=None:
-            self.aiControllerCallback.score-=amount/2
+            self.aiControllerCallback.score-=amount/4
 
 class GameWorld:
     def __init__(self,radius):

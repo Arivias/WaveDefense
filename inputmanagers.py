@@ -67,7 +67,7 @@ class PlayerInputManager:
         return out
 
 class EvoAIInput:
-    def __init__(self,copyFrom=None,mutationRate=3,mutationMagnitude=0.03):
+    def __init__(self,copyFrom=None,mutationRate=2,mutationMagnitude=0.2):
         self.score=0
         self.lastRaycast=0
         self.lastEyes=None
@@ -115,8 +115,8 @@ class EvoAIInput:
                         if d!=None:
                             if d<closestTarget:
                                 closestTarget=d
-                inputs.append(closestTarget)
-                self.lastEyes.append(closestTarget)
+                inputs.append(self.rayLength-closestTarget)
+                self.lastEyes.append(self.rayLength-closestTarget)
                 closestTarget=ship.world.radius*2
                 for obj in ship.world.tickQueue:#search projectiles
                     if isinstance(obj,wdcore.Projectile):
@@ -124,8 +124,8 @@ class EvoAIInput:
                         if d!=None:
                             if d<closestTarget:
                                 closestTarget=d
-                inputs.append(closestTarget)
-                self.lastEyes.append(closestTarget)
+                inputs.append(self.rayLength-closestTarget)
+                self.lastEyes.append(self.rayLength-closestTarget)
             
             eyeAng+=angSeparation
         if self.lastRaycast>0:
