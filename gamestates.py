@@ -125,7 +125,8 @@ class EvoArenaState(wd.GameState):
                 s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
                 net=self.scores[bi][1]
                 if i==1:
-                    net=self.prev
+                    #net=self.prev
+                    pass
                 self.prev=self.scores[bi][1]
                 i=inputmanagers.EvoAIInput(net)
                 s.aiControllerCallback=i
