@@ -62,6 +62,7 @@ class EvoArenaState(wd.GameState):
         #self.world.shipList[1].aiControllerCallback=self.inputManagers[1]
 
         self.numShips=6
+        self.halfMode=True
         self.controllers=[]
         angle=0
         angleInc=math.pi*2/self.numShips
@@ -96,14 +97,17 @@ class EvoArenaState(wd.GameState):
             angleInc=math.pi*2/self.numShips
             for i in range(len(self.inputManagers)):
                 self.scores.append((self.inputManagers[i].score,self.inputManagers[i]))
-            bestScore=self.scores[0][0]
-            bi=0
-            for i in range(len(self.scores)):
-                if self.scores[i][0]>bestScore:
-                    bestScore=self.scores[i][0]
-                    bi=i
-            #bestScore=self.msortScores(self.scores)
-            ########
+            if not self.halfMode:
+                bestScore=self.scores[0][0]
+                bi=0
+                for i in range(len(self.scores)):
+                    if self.scores[i][0]>bestScore:
+                        bestScore=self.scores[i][0]
+                        bi=i
+            else:
+                self.bestScore=self.msortScores(self.scores)
+                cb=0
+                cu=0
             self.world.shipList=[]
             self.world.tickQueue=[]
             self.world.rigs=[]
@@ -118,7 +122,16 @@ class EvoArenaState(wd.GameState):
                 s.rig.x=sp[0]
                 s.rig.y=sp[1]
                 s.rig.rot=math.pi*2*random.randint(0,100)/100
-                i=inputmanagers.EvoAIInput(self.scores[bi][1])
+                if self.halfMode:
+                    net=self.bestScore[cb][1]
+                    if cu==1:
+                        cu=0
+                        cb+=1
+                    else:
+                        cu+=1
+                else:
+                    net=self.scores[bi][1]
+                i=inputmanagers.EvoAIInput(net)
                 s.aiControllerCallback=i
                 self.inputManagers.append(i)
                 self.world.shipList.append(s)
@@ -127,12 +140,15 @@ class EvoArenaState(wd.GameState):
                 angle+=angleInc
 
             if self.currentGeneration%2==0:####save frequency
-                game.data["best_network"]=self.scores[bi][1].weights
+                if self.halfMode:
+                    game.data["best_network"]=self.bestScore[len(self.bestScore)-1][1].weights
+                else:
+                    game.data["best_network"]=self.scores[bi][1].weights
                 game.data["current_generation"]=self.currentGeneration
                 game.save()
             self.scores=[]
             
-            print(str(self.currentGeneration)+": "+str(bestScore))#[len(bestScore)-1][0]))
+            print(str(self.currentGeneration)+": "+str(self.bestScore[len(self.bestScore)-1][0]))
             self.currentGeneration+=1
         
             
