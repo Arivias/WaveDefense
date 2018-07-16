@@ -644,7 +644,7 @@ class Editor:
         name=self.findpanename("file").objnames["filename"].contents
         self.rig.name=name
         pygame.display.set_caption(self.rig.name+" - Vector Rig Editor")
-        print(self.rig.toJson(name),file=open("saves/"+name+".json","w"))
+        print(self.rig.toJson(name),file=open("saves/Vector_Rigs/"+name+".json","w"))
     def findpanename(self,name):
         for pane in self.panes:
             if pane.name==name:
@@ -669,7 +669,7 @@ class Editor:
         self.mirrorselect=([],[],[])
         self.selection_single=None
     def loadRig(self,name):
-        path="saves/"
+        path="saves/Vector_Rigs/"
         self.rig=vr.Rig(path+name+".json",True)
         self.selection=[]
         self.mirrorselect=([],[],[])
