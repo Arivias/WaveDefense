@@ -15,12 +15,10 @@ class AINetwork:
         self.enemy_distances = tf.placeholder(tf.float32, [None, number_eyes])
         self.projectile_distances = tf.placeholder(tf.float32, [None, number_eyes])
         eyes = tf.concat([self.enemy_distances, self.projectile_distances], axis=1)
-        print('Eyes shape:', eyes.shape)
         inputs = tf.concat([
             self.angular_velocity, self.forward_velocity, self.strafe_velocity,
             self.health, eyes
         ], axis=1)
-        print('Inputs:',inputs.shape)
         hidden_layer_1 = tf.layers.dense(inputs, hidden_size, activation)
         self.value = tf.layers.dense(inputs, 1)
         self.output = tf.layers.dense(hidden_layer_1, number_actions, tf.nn.tanh)
