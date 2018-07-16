@@ -11,7 +11,7 @@ class TestState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
         self.screenpos=[-1000,-500]
-        self.wscale=0.15
+        self.wscale=0.12
         self.s1=wd.Ship("saves/Vector_Rigs/ship3.json",[1,10,1,5,150,100,270,180,20,720])
         self.s1.rig.y=10
         self.s1.rig.wscale=self.wscale
