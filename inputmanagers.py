@@ -92,7 +92,7 @@ class EvoAIInput:
             for w in copyFrom.weights:
                 if random.randint(1,mutationRate)==1:
                     w+=random.randint(-100,100)/100*mutationMagnitude
-                self.weights.append(w)
+                self.weights.append(max(min(w, 1), -1))
     def getInputArray(self,deltaTime,state,ship):
         inputs=[]
         angSeparation=math.pi*2

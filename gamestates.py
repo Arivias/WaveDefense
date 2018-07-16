@@ -61,7 +61,7 @@ class EvoArenaState(wd.GameState):
         #self.inputManagers.append(inputmanagers.EvoAIInput())
         #self.world.shipList[1].aiControllerCallback=self.inputManagers[1]
 
-        self.numShips=6
+        self.numShips=2
         self.halfMode=True
         self.controllers=[]
         angle=0
@@ -147,8 +147,11 @@ class EvoArenaState(wd.GameState):
                 game.data["current_generation"]=self.currentGeneration
                 game.save()
             self.scores=[]
-            
-            print(str(self.currentGeneration)+": "+str(self.bestScore[len(self.bestScore)-1][0]))
+
+            if self.halfMode:
+                print(str(self.currentGeneration)+": "+str(self.bestScore[len(self.bestScore)-1][0]))
+            else:
+                print(str(self.currentGeneration)+": "+str(self.scores[bi][0]))
             self.currentGeneration+=1
         
             
