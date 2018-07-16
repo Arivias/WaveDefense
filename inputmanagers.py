@@ -67,13 +67,13 @@ class PlayerInputManager:
         return out
 
 class EvoAIInput:
-    def __init__(self,copyFrom=None,mutationRate=3,mutationMagnitude=0.1):
+    def __init__(self,copyFrom=None,mutationRate=3,mutationMagnitude=0.03):
         self.score=0
         self.lastRaycast=0
         self.lastEyes=None
         if copyFrom==None:
-            self.hiddenSize=15
-            self.numEyes=20
+            self.hiddenSize=10
+            self.numEyes=10
             self.inputSize=self.numEyes*2+5 #eyes*2+forwardspeed+sidespeed+angvel+health+constant
             self.outputSize=7 #see ship inputs
             self.rayLength=4000
@@ -159,6 +159,7 @@ class EvoAIInput:
             for i in range(self.inputSize):
                 h+=inputs[i]*self.weights[cw]
                 cw+=1
+            h=math.tanh(h)
             hidden.append(h)
         outputs=[]
         for _ in range(self.outputSize):

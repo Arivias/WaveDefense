@@ -5,17 +5,18 @@ import math
 import wdcore as wd
 import inputmanagers
 import weapons
+import random
 
 class TestState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
         self.screenpos=[-1000,-500]
-        self.wscale=0.3
+        self.wscale=0.15
         self.s1=wd.Ship("saves/ship3.json",[1,10,1,5,150,100,270,180,20,720])
         self.s1.rig.y=10
         self.s1.rig.wscale=self.wscale
         self.s1.rig.screenpos=self.screenpos
-        self.world=wd.GameWorld(800)
+        self.world=wd.GameWorld(2000)
         self.s1.weapons[0].append(weapons.wp_PulseLaser(self.s1,10,"weapon1",self.world))
         self.inputman=playerinputmanager.PlayerInputManager()
         self.world.shipList.append(self.s1)
@@ -36,9 +37,9 @@ class TestState(wd.GameState):
 class EvoArenaState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.wscale=0.12
+        self.wscale=0.25
         self.screenpos=[(-960/2)/self.wscale,(-540/2)/self.wscale]
-        self.world=wd.GameWorld(2000)
+        self.world=wd.GameWorld(1000)
         self.posVelocity=[0,0]
         self.inputManagers=[]
         self.panTarget=-1
@@ -73,6 +74,7 @@ class EvoArenaState(wd.GameState):
             s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
             s.rig.x=sp[0]
             s.rig.y=sp[1]
+            s.rig.rot=math.pi*2*random.randint(0,100)/100
             i=inputmanagers.EvoAIInput()
             s.aiControllerCallback=i
             self.inputManagers.append(i)
@@ -108,6 +110,7 @@ class EvoArenaState(wd.GameState):
                 s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
                 s.rig.x=sp[0]
                 s.rig.y=sp[1]
+                s.rig.rot=math.pi*2*random.randint(0,100)/100
                 i=inputmanagers.EvoAIInput()
                 s.aiControllerCallback=i
                 self.inputManagers.append(i)

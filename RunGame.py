@@ -18,6 +18,7 @@ class App:
             self.window.fill((0,0,0))
             event=pygame.event.get()
             self.deltaTime=time.time()-self.lastTime
+            self.deltaTime=0.07
             self.lastTime=time.time()
             self.game.loop(self,event)
             self.game.render(self)

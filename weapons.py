@@ -41,7 +41,7 @@ class p_Simple(wdcore.Projectile):
             self.world.deleteQueue.append(self)
             self.world.deleteQueue.append(self.rig)
             if self.closest>0:
-                self.rewardCreator(1/self.closest)
+                self.rewardCreator(1/(self.closest/10))
         self.rig.x+=self.speed*math.cos(self.rig.rot-math.pi/2)*deltaTime
         self.rig.y+=self.speed*math.sin(self.rig.rot-math.pi/2)*deltaTime
         for ship in self.world.shipList:
@@ -50,7 +50,7 @@ class p_Simple(wdcore.Projectile):
                     self.world.deleteQueue.append(self.rig)
                     self.world.deleteQueue.append(self)
                     ship.damage(self.damage)
-                    self.rewardCreator(self.damage)
+                    self.rewardCreator(self.damage/2)
                 else:
                     d=math.hypot(self.rig.x-ship.rig.x,self.rig.y-ship.rig.y)
                     if d<self.closest or self.closest==0:
