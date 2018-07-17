@@ -1,1 +1,0 @@
-{"type": "vecrig", "compat_version": "1.1", "name": "bolt1", "points": [{"x": 4.0, "y": -0.0, "links": [], "tags": ["collider"]}, {"x": -4.0, "y": -0.0, "links": [3], "tags": ["collider"]}, {"x": -0.0, "y": -6.0, "links": [0, 1], "tags": ["collider"]}, {"x": -0.0, "y": 35.0, "links": [0], "tags": ["collider"]}]}
