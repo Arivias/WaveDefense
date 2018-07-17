@@ -14,7 +14,7 @@ class wp_PulseLaser(wdcore.Weapon):
         if self.cooldown==0:
             self.cooldown=0.5
             for pt in self.wpoints:
-                proj=p_Simple(pt,self.ship,"bolt1.json",900,self.damage,(255,0,0),self.world)
+                proj=p_Simple(pt,self.ship,"bolt1-2.json",900,self.damage,(255,0,0),self.world)
                 self.world.rigs.append(proj.rig)
                 self.world.tickQueue.append(proj)
     def tick(self,deltaTime):
