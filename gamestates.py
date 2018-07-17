@@ -8,31 +8,13 @@ import ai_controller
 import weapons
 import random
 
-class TestState(wd.GameState):
+class DemoMenuState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.screenpos=[-1000,-500]
-        self.wscale=0.12
-        self.s1=wd.Ship("saves/Vector_Rigs/ship3.json",[1,10,1,5,150,100,270,180,20,720])
-        self.s1.rig.y=10
-        self.s1.rig.wscale=self.wscale
-        self.s1.rig.screenpos=self.screenpos
-        self.world=wd.GameWorld(2000)
-        self.s1.weapons[0].append(weapons.wp_PulseLaser(self.s1,10,"weapon1",self.world))
-        self.inputman=playerinputmanager.PlayerInputManager()
-        self.world.shipList.append(self.s1)
-        #self.debug=0
         
     def loop(self,game,app,event):
-        self.s1.update(self.inputman.getInputArray(app.deltaTime,self,self.s1),app.deltaTime)
-        self.world.tick(app.deltaTime)
-        #d=[(0-10*math.sin(self.debug))*0.5,(10*math.cos(self.debug))*1]
-        #print(math.hypot(d[0],d[1]))
-        #self.debug+=math.pi*app.deltaTime
         pass
     def render(self,window):
-        self.s1.rig.render(window)
-        self.world.render(window,self.screenpos,self.wscale)
         pass
 
 class EvoArenaState(wd.GameState):
@@ -63,7 +45,7 @@ class EvoArenaState(wd.GameState):
         #self.world.shipList[1].aiControllerCallback=self.inputManagers[1]
 
         self.numShips=2
-        self.halfMode=True
+        #self.halfMode=False
         self.controllers=[]
         angle=0
         angleInc=math.pi*2/self.numShips
@@ -82,7 +64,7 @@ class EvoArenaState(wd.GameState):
             s.rig.x=sp[0]
             s.rig.y=sp[1]
             s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
-            i=ai_controller.AIController()
+            i=ai_controller.AIController(id=i)
             s.aiControllerCallback=i
             self.inputManagers.append(i)
             self.world.shipList.append(s)
@@ -96,48 +78,47 @@ class EvoArenaState(wd.GameState):
             self.cTime=0
             angle=0
             angleInc=math.pi*2/self.numShips
-            for i in range(len(self.inputManagers)):
-                self.scores.append((self.inputManagers[i].score,self.inputManagers[i]))
-            if not self.halfMode:
-                bestScore=self.scores[0][0]
-                bi=0
-                for i in range(len(self.scores)):
-                    if self.scores[i][0]>bestScore:
-                        bestScore=self.scores[i][0]
-                        bi=i
-            else:
-                self.bestScore=self.msortScores(self.scores)
-                cb=0
-                cu=0
+            #for i in range(len(self.inputManagers)):
+            #    self.scores.append((self.inputManagers[i].score,self.inputManagers[i]))
+            #if not self.halfMode:
+            #    bestScore=self.scores[0][0]
+            #    bi=0
+            #    for i in range(len(self.scores)):
+            #        if self.scores[i][0]>bestScore:
+            #            bestScore=self.scores[i][0]
+            #            bi=i
+            #else:
+            #    self.bestScore=self.msortScores(self.scores)
+            #    cb=0
+            #    cu=0
             self.world.shipList=[]
             self.world.tickQueue=[]
             self.world.rigs=[]
-            self.inputManagers=[]
+            #self.inputManagers=[]
             for i in range(self.numShips):
                 pos=[self.world.radius*0.75,0]
-                sp=[0,0]
-                sp[0]=pos[0]*math.cos(angle)-pos[1]*math.sin(angle)
-                sp[1]=pos[0]*math.sin(angle)+pos[1]*math.cos(angle)
-                s=wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"enemy"+str(i),self.world)
-                s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
-                s.rig.x=sp[0]
-                s.rig.y=sp[1]
-                s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
-                if self.halfMode:
-                    net=self.bestScore[cb][1]
-                    if cu==1:
-                        cu=0
-                        cb+=1
-                    else:
-                        cu+=1
-                else:
-                    net=self.scores[bi][1]
-                i=ai_controller.AIController()#this just randomizes it
-                s.aiControllerCallback=i
-                self.inputManagers.append(i)
-                self.world.shipList.append(s)
-                self.world.rigs.append(s.rig)
-                self.world.tickQueue.append(s)
+                spawn_position=[0,0]
+                spawn_position[0]=pos[0]*math.cos(angle)-pos[1]*math.sin(angle)
+                spawn_position[1]=pos[0]*math.sin(angle)+pos[1]*math.cos(angle)
+                ship=wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"enemy"+str(i),self.world)
+                ship.weapons[0].append(weapons.wp_PulseLaser(ship,1,"weapon1",self.world))
+                ship.rig.x, ship.rig.y = spawn_position
+                ship.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
+                #if self.halfMode:
+                #    net=self.bestScore[cb][1]
+                #    if cu==1:
+                #        cu=0
+                #        cb+=1
+                #    else:
+                #        cu+=1
+                #else:
+                #    net=self.scores[bi][1]
+                #i=ai_controller.AIController()#this just randomizes it
+                ship.aiControllerCallback=self.inputManagers[i]
+                #self.inputManagers.append(i)
+                self.world.shipList.append(ship)
+                self.world.rigs.append(ship.rig)
+                self.world.tickQueue.append(ship)
                 angle+=angleInc
 
             if self.currentGeneration%2==0 and False:####save frequency ######disabled
@@ -149,10 +130,11 @@ class EvoArenaState(wd.GameState):
                 game.save()
             self.scores=[]
 
-            if self.halfMode:
-                print(str(self.currentGeneration)+": "+str(self.bestScore[len(self.bestScore)-1][0]))
-            else:
-                print(str(self.currentGeneration)+": "+str(self.scores[bi][0]))
+            #if self.halfMode:
+            #    print(str(self.currentGeneration)+": "+str(self.bestScore[len(self.bestScore)-1][0]))
+            #else:
+            #    print(str(self.currentGeneration)+": "+str(self.scores[bi][0]))
+            print(self.currentGeneration)
             self.currentGeneration+=1
         
             
@@ -172,13 +154,10 @@ class EvoArenaState(wd.GameState):
                 self.world.shipList[ship].input=ip
         delList=self.world.tick(app.deltaTime)
         if len(delList)>0:
-            newInputs=[]
             for i in range(len(self.inputManagers)):
                 if i in delList:
-                    self.scores.append((self.inputManagers[i].score,self.inputManagers[i]))
+                    self.inputManagers[i].getInputArray(app.deltaTime,self,self.world.shipList[ship],False)
                     continue
-                newInputs.append(self.inputManagers[i])
-            self.inputManagers=newInputs
                 
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)
