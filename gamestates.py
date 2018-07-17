@@ -96,6 +96,7 @@ class EvoArenaState(wd.GameState):
             self.world.rigs=[]
             #self.inputManagers=[]
             for i in range(self.numShips):
+                self.inputManagers[i].train(0.99)
                 pos=[self.world.radius*0.75,0]
                 spawn_position=[0,0]
                 spawn_position[0]=pos[0]*math.cos(angle)-pos[1]*math.sin(angle)

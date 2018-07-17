@@ -2,7 +2,15 @@ import tensorflow as tf
 from inputmanagers import DummyInputManager
 import math
 import wdcore
+import numpy as np
 
+def discout_rewards(rewards, gamma):
+    discounted_rewards=np.zeros_like(rewards)
+    running_add=0
+    for t in reversed(range(len(rewards))):
+        running_add = running_add * gamma + rewards[t]
+        discounted_rewards[t] = running_add
+    return discounted_rewards
 
 class AINetwork:
     globalNet=None
@@ -139,7 +147,7 @@ class AIController(DummyInputManager):
         self.score=0
         return outputs
 
-    def train(self):
+    def train(self,gamma,bootstrap_value=0.0):
         # process/format step buffer
         health = []
         angular_velocity = []
@@ -152,11 +160,11 @@ class AIController(DummyInputManager):
         running_list = []
         values=[]
         for state, action, reward, next_state, running, value in self.buffer:
-            health.append(state[self.ai_network.health])
-            angular_velocity.append(state[self.ai_network.angular_velocity])
-            forward_velocity.append(state[self.ai_network.forward_velocity])
-            strafe_velocity.append(state[self.ai_network.strafe_velocity])
-            enemy_distances.append(state[self.ai_network.enemy_distances])
+            health.append(state[self.ai_network.health][0])
+            angular_velocity.append(state[self.ai_network.angular_velocity][0])
+            forward_velocity.append(state[self.ai_network.forward_velocity][0])
+            strafe_velocity.append(state[self.ai_network.strafe_velocity][0])
+            enemy_distances.append(state[self.ai_network.enemy_distances][0])
             projectile_distances.append(state[self.ai_network.projectile_distances])
             ###
             actions.append(action)
@@ -166,6 +174,26 @@ class AIController(DummyInputManager):
             running_list.append(running)
             ###
             values.append(value)
+        self.rewards_plus = np.asarray(rewards+[bootstrap_value])
+        discounted_rewards = discout_rewards(self.rewards_plus,gamma)
+        self.value_plus = np.asarray(values+[bootstrap_value])
+        advantages = rewards+gamma*self.value_plus[1:]-self.value_plus[:-1]
+        advantages=discout_rewards(advantages,gamma)
+        print(tf.shape(tf.constant(projectile_distances)))
+        feed_dictionary={
+            self.ai_network.health: health,
+            self.ai_network.angular_velocity: angular_velocity,
+            self.ai_network.forward_velocity: forward_velocity,
+            self.ai_network.strafe_velocity: strafe_velocity,
+            self.ai_network.enemy_distances: enemy_distances,
+            self.ai_network.projectile_distances: projectile_distances,
+            self.ai_trainer.value_target: discounted_rewards,
+            self.ai_trainer.advantages: advantages,
+            self.ai_trainer.chosen_actions: actions
+        }
+        self.sess.run(self.ai_trainer.apply_gradients,feed_dictionary)
+
+
         # feed buffer into tf session to determine gradients
         # update global  vars
         # clear step buffer
