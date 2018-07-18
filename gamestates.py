@@ -27,7 +27,7 @@ class EvoArenaState(wd.GameState):
         self.inputManagers=[]
         self.panTarget=-1
         self.scores=[]
-        self.maxTime=20
+        self.maxTime=4
         self.cTime=0
         self.currentGeneration=0
 
@@ -64,7 +64,7 @@ class EvoArenaState(wd.GameState):
             s.rig.x=sp[0]
             s.rig.y=sp[1]
             s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
-            i=ai_controller.AIController(id=i)
+            i=ai_controller.AIController(ai_id=i)
             s.aiControllerCallback=i
             self.inputManagers.append(i)
             self.world.shipList.append(s)

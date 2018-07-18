@@ -15,9 +15,10 @@ def discout_rewards(rewards, gamma):
 class AINetwork:
     globalNet=None
 
-    def __init__(self, scope, number_eyes, number_actions=7, hidden_size=16, activation=tf.nn.relu):
+    def __init__(self, scope, number_eyes, number_actions=7, hidden_size=16, activation=tf.nn.sigmoid):
         if not AINetwork.globalNet and scope!='global':
             AINetwork.globalNet = AINetwork("global",number_eyes)
+            print('Initialized global net')
 
         with tf.variable_scope(scope):
             self.number_actions = number_actions
@@ -35,12 +36,12 @@ class AINetwork:
             ], axis=1)
             hidden_layer_1 = tf.layers.dense(inputs, hidden_size, activation)
             self.value = tf.layers.dense(inputs, 1)
-            self.output = tf.layers.dense(hidden_layer_1, number_actions, tf.nn.tanh)
+            self.output = tf.layers.dense(hidden_layer_1, number_actions, tf.nn.sigmoid)
 
 
 class AINetworkTrainer:
     def __init__(self,scope ,ai_network, value_loss_weight=0.5, policy_loss_weight=1,
-                 entropy_weight=0.01, optimizer=tf.train.AdamOptimizer(learning_rate=0.001)):
+                 entropy_weight=0.01, optimizer=tf.train.AdamOptimizer(learning_rate=0.0001)):
         assert scope!='global'
         with tf.variable_scope(scope):
             self.value_target = tf.placeholder(tf.float32, [None, 1])
@@ -57,7 +58,9 @@ class AINetworkTrainer:
             local_variables=tf.trainable_variables(scope)
             self.gradients=tf.gradients(self.loss,local_variables)
             global_variables=tf.trainable_variables("global")
-            self.apply_gradients=optimizer.apply_gradients(zip(self.gradients,global_variables))
+            grad_norm = 1
+            self.gradients_norm = [tf.clip_by_norm(gradient, grad_norm) for gradient in self.gradients]
+            self.apply_gradients=optimizer.apply_gradients(zip(self.gradients_norm,global_variables))
             self.pull_global_variables=[local_variable.assign(global_variable)
                                         for local_variable, global_variable in
                                         zip(local_variables,global_variables)]
@@ -65,12 +68,13 @@ class AINetworkTrainer:
 
 
 class AIController(DummyInputManager):
-    def __init__(self, id=1):
+    def __init__(self, ai_id=1):
         super().__init__()
+        self.ai_id = ai_id
         self.score = 0
         self.number_eyes = 10
-        self.ai_network = AINetwork(scope='worker{}'.format(id), number_eyes=self.number_eyes)
-        self.ai_trainer = AINetworkTrainer('worker{}'.format(id), self.ai_network)
+        self.ai_network = AINetwork(scope='worker{}'.format(self.ai_id), number_eyes=self.number_eyes)
+        self.ai_trainer = AINetworkTrainer('worker{}'.format(self.ai_id), self.ai_network)
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
         self.prev_state=None
@@ -132,6 +136,7 @@ class AIController(DummyInputManager):
 
         outputs, value = self.sess.run([self.ai_network.output, self.ai_network.value], feed_dict)
         outputs=outputs.tolist()[0]
+        #print('Worker {} outputs:\t{}'.format(self.ai_id, outputs))
         value = value[0][0]
         if self.prev_state:
             self.buffer.append([self.prev_state,self.prev_action,self.score,feed_dict,stillRunning, value])
@@ -160,12 +165,12 @@ class AIController(DummyInputManager):
         running_list = []
         values=[]
         for state, action, reward, next_state, running, value in self.buffer:
-            health.append(state[self.ai_network.health])
+            health.append(state[self.ai_network.health][0])
             angular_velocity.append(state[self.ai_network.angular_velocity][0])
             forward_velocity.append(state[self.ai_network.forward_velocity][0])
             strafe_velocity.append(state[self.ai_network.strafe_velocity][0])
-            enemy_distances.append(state[self.ai_network.enemy_distances])
-            projectile_distances.append(state[self.ai_network.projectile_distances])
+            enemy_distances.append(state[self.ai_network.enemy_distances][0])
+            projectile_distances.append(state[self.ai_network.projectile_distances][0])
             ###
             actions.append(action)
             ###
@@ -180,16 +185,22 @@ class AIController(DummyInputManager):
         advantages = rewards+gamma*self.value_plus[1:]-self.value_plus[:-1]
         advantages=discout_rewards(advantages,gamma)
 
-        health=np.reshape(health,(-1,1))
-        angular_velocity=np.reshape(angular_velocity,(-1,1))
-        forward_velocity=np.reshape(forward_velocity,(-1,1))
-        strafe_velocity=np.reshape(strafe_velocity,(-1,1))
+        #health=np.reshape(health,(-1,1))
+        #angular_velocity=np.reshape(angular_velocity,(-1,1))
+        #forward_velocity=np.reshape(forward_velocity,(-1,1))
+        #strafe_velocity=np.reshape(strafe_velocity,(-1,1))
         
-        enemy_distances=np.reshape(enemy_distances,(-1,10))
-        projectile_distances=np.reshape(projectile_distances,(-1,10))
+        #enemy_distances=np.reshape(enemy_distances,(-1,10))
+        #projectile_distances=np.reshape(projectile_distances,(-1,10))
 
-        discounted_rewards=np.reshape(discounted_rewards,(-1,1))
-        advantages=np.reshape(advantages,(-1,1))
+        #discounted_rewards=np.reshape(discounted_rewards,(-1,1))
+        d_rewards=[]
+        for i in discounted_rewards:
+            d_rewards.append([i])
+        adv=[]
+        for i in advantages:
+            adv.append([i])
+        #advantages=np.reshape(advantages,(-1,1))
         #actions=np.reshape(actions,(-1,1))
         
         #print(len(advantages))
@@ -200,14 +211,18 @@ class AIController(DummyInputManager):
             self.ai_network.strafe_velocity: strafe_velocity,
             self.ai_network.enemy_distances: enemy_distances,
             self.ai_network.projectile_distances: projectile_distances,
-            self.ai_trainer.value_target: discounted_rewards,
-            self.ai_trainer.advantages: advantages,
+            self.ai_trainer.value_target: d_rewards,
+            self.ai_trainer.advantages: adv,
             self.ai_trainer.chosen_actions: actions
         }
+        #print("BEFORE:")
+        #print(self.sess.run(tf.trainable_variables('global')))
         self.sess.run(self.ai_trainer.apply_gradients,feed_dictionary)
-
-
+        #print("AFTER:")
+        #print(self.sess.run(tf.trainable_variables('global')))
+        self.sess.run(self.ai_trainer.pull_global_variables)
+        #print('Pulled global variables for worker {}.'.format(self.ai_id))
         # feed buffer into tf session to determine gradients
-        # update global  vars
+        # update global vars
         # clear step buffer
-        self.buffer.clear()
+        self.buffer=[]
