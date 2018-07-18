@@ -61,7 +61,7 @@ class EvoArenaState(wd.GameState):
         #self.inputManagers.append(inputmanagers.EvoAIInput())
         #self.world.shipList[1].aiControllerCallback=self.inputManagers[1]
 
-        self.numShips=3
+        self.numShips=16
         self.halfMode=True
         self.controllers=[]
         angle=0
