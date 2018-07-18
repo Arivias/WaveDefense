@@ -14,8 +14,7 @@ def discout_rewards(rewards, gamma):
 
 class AINetwork:
     globalNet=None
-
-    def __init__(self, scope, number_eyes, number_actions=7, hidden_size=16, activation=tf.nn.sigmoid):
+    def __init__(self, scope, number_eyes=10, number_actions=7, hidden_size=16, activation=tf.nn.sigmoid):
         if not AINetwork.globalNet and scope!='global':
             AINetwork.globalNet = AINetwork("global",number_eyes)
             print('Initialized global net')
@@ -41,7 +40,7 @@ class AINetwork:
 
 class AINetworkTrainer:
     def __init__(self,scope ,ai_network, value_loss_weight=0.5, policy_loss_weight=1,
-                 entropy_weight=0.01, optimizer=tf.train.AdamOptimizer(learning_rate=0.0001)):
+                 entropy_weight=0.10, optimizer=tf.train.AdamOptimizer(learning_rate=0.01)):
         assert scope!='global'
         with tf.variable_scope(scope):
             self.value_target = tf.placeholder(tf.float32, [None, 1])
@@ -50,15 +49,16 @@ class AINetworkTrainer:
             responsible_action = tf.multiply(ai_network.output, self.chosen_actions)
             responsible_action = tf.reduce_sum(responsible_action, [1])
             action_loss = -tf.reduce_sum(responsible_action * self.advantages)
-            entropy = tf.multiply(ai_network.output, tf.log(ai_network.output))
+            abs_output = tf.abs(ai_network.output)
+            
+            entropy = tf.multiply(ai_network.output, tf.log(tf.clip_by_value(abs_output,1e-20,1)))
             entropy = -tf.reduce_sum(entropy)
             value_loss = tf.losses.mean_squared_error(self.value_target, ai_network.value)
             self.loss = (value_loss * value_loss_weight + action_loss * policy_loss_weight - entropy * entropy_weight)
-            # self.train = optimizer.minimize(self.loss)
             local_variables=tf.trainable_variables(scope)
             self.gradients=tf.gradients(self.loss,local_variables)
             global_variables=tf.trainable_variables("global")
-            grad_norm = 1
+            grad_norm = 100
             self.gradients_norm = [tf.clip_by_norm(gradient, grad_norm) for gradient in self.gradients]
             self.apply_gradients=optimizer.apply_gradients(zip(self.gradients_norm,global_variables))
             self.pull_global_variables=[local_variable.assign(global_variable)
@@ -68,6 +68,7 @@ class AINetworkTrainer:
 
 
 class AIController(DummyInputManager):
+    sess = None
     def __init__(self, ai_id=1):
         super().__init__()
         self.ai_id = ai_id
@@ -75,7 +76,9 @@ class AIController(DummyInputManager):
         self.number_eyes = 10
         self.ai_network = AINetwork(scope='worker{}'.format(self.ai_id), number_eyes=self.number_eyes)
         self.ai_trainer = AINetworkTrainer('worker{}'.format(self.ai_id), self.ai_network)
-        self.sess = tf.Session()
+        if not AIController.sess:
+            AIController.sess = tf.Session()
+        self.sess = AIController.sess
         self.sess.run(tf.global_variables_initializer())
         self.prev_state=None
         self.prev_action=None
@@ -215,11 +218,7 @@ class AIController(DummyInputManager):
             self.ai_trainer.advantages: adv,
             self.ai_trainer.chosen_actions: actions
         }
-        #print("BEFORE:")
-        #print(self.sess.run(tf.trainable_variables('global')))
         self.sess.run(self.ai_trainer.apply_gradients,feed_dictionary)
-        #print("AFTER:")
-        #print(self.sess.run(tf.trainable_variables('global')))
         self.sess.run(self.ai_trainer.pull_global_variables)
         #print('Pulled global variables for worker {}.'.format(self.ai_id))
         # feed buffer into tf session to determine gradients

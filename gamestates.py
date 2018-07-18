@@ -7,6 +7,8 @@ import inputmanagers
 import ai_controller
 import weapons
 import random
+import tensorflow as tf
+import os
 
 class DemoMenuState(wd.GameState):
     def __init__(self,game):
@@ -30,7 +32,9 @@ class EvoArenaState(wd.GameState):
         self.maxTime=4
         self.cTime=0
         self.currentGeneration=0
-
+        global_net = ai_controller.AINetwork('test')
+        ai_controller.AIController.sess = tf.Session()
+        self.saver = tf.train.Saver(max_to_keep=10)
         self.logo=vr.Rig("saves/Vector_Rigs/next.json")
 
         ####Test stuff
@@ -51,9 +55,18 @@ class EvoArenaState(wd.GameState):
         self.controllers=[]
         angle=0
         angleInc=math.pi*2/self.numShips
-        startNetwork=None
-        if "best_network" in game.data:
-            startNetwork=game.data["best_network"]
+        load = True
+        try:
+            folder_path='saves/Gamedata/ai-model'
+            checkpoint = tf.train.get_checkpoint_state(folder_path)
+            print('Checkpoint path:', os.path.abspath(checkpoint.model_checkpoint_path))
+            #restore the checkpoint for our agent
+            self.saver.restore(ai_controller.AIController.sess, os.path.abspath(checkpoint.model_checkpoint_path))
+            print('Model restored.')
+        except Exception as e:
+            print('Did not load model.')
+            print(e)
+        
         if "current_generation" in game.data:
             self.currentGeneration=game.data["current_generation"]
         for i in range(self.numShips):
@@ -124,11 +137,14 @@ class EvoArenaState(wd.GameState):
                 self.world.tickQueue.append(ship)
                 angle+=angleInc
 
-            if self.currentGeneration%2==0 and False:####save frequency ######disabled
-                if self.halfMode:
-                    game.data["best_network"]=self.bestScore[len(self.bestScore)-1][1].weights
-                else:
-                    game.data["best_network"]=self.scores[bi][1].weights
+            if self.currentGeneration%20==0:####save frequency ######disabled
+                #######
+                if not self.saver:
+                    self.saver = tf.train.Saver(max_to_keep=10)
+                folder_path='saves/Gamedata/ai-model/'
+                if not os.path.exists(folder_path):
+                    os.makedirs(folder_path)
+                self.saver.save(ai_controller.AIController.sess, folder_path+'trained', global_step=self.currentGeneration)
                 game.data["current_generation"]=self.currentGeneration
                 game.save()
             self.scores=[]
