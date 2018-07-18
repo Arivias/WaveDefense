@@ -160,11 +160,11 @@ class AIController(DummyInputManager):
         running_list = []
         values=[]
         for state, action, reward, next_state, running, value in self.buffer:
-            health.append(state[self.ai_network.health][0])
+            health.append(state[self.ai_network.health])
             angular_velocity.append(state[self.ai_network.angular_velocity][0])
             forward_velocity.append(state[self.ai_network.forward_velocity][0])
             strafe_velocity.append(state[self.ai_network.strafe_velocity][0])
-            enemy_distances.append(state[self.ai_network.enemy_distances][0])
+            enemy_distances.append(state[self.ai_network.enemy_distances])
             projectile_distances.append(state[self.ai_network.projectile_distances])
             ###
             actions.append(action)
@@ -175,11 +175,24 @@ class AIController(DummyInputManager):
             ###
             values.append(value)
         self.rewards_plus = np.asarray(rewards+[bootstrap_value])
-        discounted_rewards = discout_rewards(self.rewards_plus,gamma)
+        discounted_rewards = discout_rewards(self.rewards_plus,gamma)[:-1]
         self.value_plus = np.asarray(values+[bootstrap_value])
         advantages = rewards+gamma*self.value_plus[1:]-self.value_plus[:-1]
         advantages=discout_rewards(advantages,gamma)
-        print(tf.shape(tf.constant(projectile_distances)))
+
+        health=np.reshape(health,(-1,1))
+        angular_velocity=np.reshape(angular_velocity,(-1,1))
+        forward_velocity=np.reshape(forward_velocity,(-1,1))
+        strafe_velocity=np.reshape(strafe_velocity,(-1,1))
+        
+        enemy_distances=np.reshape(enemy_distances,(-1,10))
+        projectile_distances=np.reshape(projectile_distances,(-1,10))
+
+        discounted_rewards=np.reshape(discounted_rewards,(-1,1))
+        advantages=np.reshape(advantages,(-1,1))
+        #actions=np.reshape(actions,(-1,1))
+        
+        #print(len(advantages))
         feed_dictionary={
             self.ai_network.health: health,
             self.ai_network.angular_velocity: angular_velocity,
