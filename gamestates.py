@@ -20,7 +20,7 @@ class DemoMenuState(wd.GameState):
 class EvoArenaState(wd.GameState):
     def __init__(self,game):
         super().__init__(game)
-        self.wscale=0.15
+        self.wscale=0.12
         self.screenpos=[(-960/2)/self.wscale,(-540/2)/self.wscale]
         self.world=wd.GameWorld(2000)
         self.posVelocity=[0,0]
@@ -30,6 +30,8 @@ class EvoArenaState(wd.GameState):
         self.maxTime=4
         self.cTime=0
         self.currentGeneration=0
+
+        self.logo=vr.Rig("saves/Vector_Rigs/next.json")
 
         ####Test stuff
         #self.world.shipList=[wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"player",self.world)]
@@ -162,6 +164,11 @@ class EvoArenaState(wd.GameState):
                 
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)
+        self.logo.y=-self.world.radius*1.5/3
+        self.logo.screenpos=self.screenpos
+        self.logo.wscale=self.wscale
+        self.logo.scale=self.world.radius/2000*3
+        self.logo.render(window)
     def msortScores(self,scores):
         if len(scores)<=1:
             return scores
