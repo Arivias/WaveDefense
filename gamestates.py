@@ -176,7 +176,6 @@ class EvoArenaState(wd.GameState):
             for i in range(len(self.inputManagers)):
                 if i in delList:
                     self.inputManagers[i].getInputArray(app.deltaTime,self,self.world.shipList[ship],False)
-                    del self.world.shipList[i]
                     continue
                 
     def render(self,window):
@@ -259,12 +258,6 @@ class DemoArenaState(wd.GameState):####################################
         
     def loop(self,game,app,event):
         self.cTime+=app.deltaTime
-        if len(self.world.shipList)<=1:#on round end
-            if isinstance(self.inputManagers[0],inputmanagers.PlayInputManager):
-                print("All enemies defeated.")
-            else:
-                print("You were defeated.")
-            pygame.quit()
             
         ##Pan camera
         if self.panTarget!=-1:
@@ -281,18 +274,24 @@ class DemoArenaState(wd.GameState):####################################
             ip=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
             if ip!=None:
                 self.world.shipList[ship].input=ip
-        delList=self.world.tick(app.deltaTime)
+        delList=self.world.tick(app.deltaTime,False)
         if len(delList)>0:
             newManagers=[]
             for i in range(len(self.inputManagers)):
                 if i in delList:
                     self.inputManagers[i].getInputArray(app.deltaTime,self,self.world.shipList[ship],False)
-                    print("asdf",self.world.shipList)
                     del self.world.shipList[i]
-                    print(self.world.shipList)
                     continue
                 newManagers.append(self.inputManagers[i])
             self.inputManagers=newManagers
+            
+        if len(self.world.shipList)<=1:#on round end
+            print("\n\n")
+            if isinstance(self.inputManagers[0],inputmanagers.PlayerInputManager):
+                print("All enemies defeated.")
+            else:
+                print("You were defeated.")
+            app.running=False
                 
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)

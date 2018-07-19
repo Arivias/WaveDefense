@@ -133,6 +133,7 @@ class Ship:
         if self.currentHealth<=0:
             if self not in self.world.deleteQueue and self in self.world.shipList:
                 self.world.deleteQueue.append(self)
+                print("asdf")
         if self.aiControllerCallback!=None:
             self.aiControllerCallback.score-=amount/4
 
@@ -145,7 +146,7 @@ class GameWorld:
         self.deleteQueue=[]
         #self.grid=[[],[]]
         #self.gridwidth=100
-    def tick(self,deltaTime):
+    def tick(self,deltaTime,delete=True):
         for obj in self.tickQueue:
             obj.tick(deltaTime)
         for ship in self.shipList:
@@ -159,8 +160,9 @@ class GameWorld:
         for obj in range(len(self.deleteQueue)):
             if self.deleteQueue[obj] in self.shipList:
                 self.rigs.remove(self.deleteQueue[obj].rig)
+                if delete:
+                    self.shipList.remove(self.deleteQueue[obj])
                 delList.append(self.shipList.index(self.deleteQueue[obj]))
-                print(delList)
                 self.tickQueue.remove(self.deleteQueue[obj])
             if self.deleteQueue[obj] in self.rigs:
                 self.rigs.remove(self.deleteQueue[obj])
