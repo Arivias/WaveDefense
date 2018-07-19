@@ -14,7 +14,7 @@ class Game:
             self.keys=[]
             self.data={}###TODO: load from JSON
             self.data["player_ship"]={}
-            self.data["player_ship"]["path"]="saves/Vector_Rigs/mystery-orient.json"
+            self.data["player_ship"]["path"]="saves/Vector_Rigs/m2-o.json"
             self.data["player_ship"]["data"]=[5,15,10,20,170,60,230,180,20,660]
             self.data["ships"]={}
             self.data["ships"]["e1"]={}
