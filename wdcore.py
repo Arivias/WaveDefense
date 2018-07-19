@@ -131,7 +131,8 @@ class Ship:
     def damage(self,amount):
         self.currentHealth-=amount
         if self.currentHealth<=0:
-            self.world.deleteQueue.append(self)
+            if self not in self.world.deleteQueue and self in self.world.shipList:
+                self.world.deleteQueue.append(self)
         if self.aiControllerCallback!=None:
             self.aiControllerCallback.score-=amount/4
 
@@ -158,9 +159,9 @@ class GameWorld:
         for obj in range(len(self.deleteQueue)):
             if self.deleteQueue[obj] in self.shipList:
                 self.rigs.remove(self.deleteQueue[obj].rig)
-                self.shipList.remove(self.deleteQueue[obj])
+                delList.append(self.shipList.index(self.deleteQueue[obj]))
+                print(delList)
                 self.tickQueue.remove(self.deleteQueue[obj])
-                delList.append(obj)
             if self.deleteQueue[obj] in self.rigs:
                 self.rigs.remove(self.deleteQueue[obj])
             if self.deleteQueue[obj] in self.tickQueue:

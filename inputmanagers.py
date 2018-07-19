@@ -12,8 +12,10 @@ class DummyInputManager:
 
 class PlayerInputManager:
     def __init__(self):
+        self.active=True
         pass
-    def getInputArray(self,deltaTime,state,ship):
+    def getInputArray(self,deltaTime,state,ship,active=True):
+        self.active=active
         out=[]
         out.append(0)
         if state.game.keys[pygame.K_a]:

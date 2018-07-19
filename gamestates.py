@@ -176,7 +176,123 @@ class EvoArenaState(wd.GameState):
             for i in range(len(self.inputManagers)):
                 if i in delList:
                     self.inputManagers[i].getInputArray(app.deltaTime,self,self.world.shipList[ship],False)
+                    del self.world.shipList[i]
                     continue
+                
+    def render(self,window):
+        self.world.render(window,self.screenpos,self.wscale)
+        self.logo.y=-self.world.radius*1.5/3
+        self.logo.screenpos=self.screenpos
+        self.logo.wscale=self.wscale
+        self.logo.scale=self.world.radius/2000*3
+        self.logo.render(window)
+    def msortScores(self,scores):
+        if len(scores)<=1:
+            return scores
+        else:
+            s1=self.msortScores(scores[:int(len(scores)/2)])
+            s2=self.msortScores(scores[int(len(scores)/2):])
+            out=[]
+            while len(s1)!=0 and len(s2)!=0:
+                if s1[0][0]>s2[0][0]:
+                    out.append(s2.pop(0))
+                else:
+                    out.append(s1.pop(0))
+            for s in s1:
+                out.append(s)
+            for s in s2:
+                out.append(s)
+            return out
+
+class DemoArenaState(wd.GameState):####################################
+    def __init__(self,game):
+        super().__init__(game)
+        self.wscale=0.12
+        self.screenpos=[(-960/2)/self.wscale,(-540/2)/self.wscale]
+        self.world=wd.GameWorld(2000)
+        self.posVelocity=[0,0]
+        self.inputManagers=[]
+        self.panTarget=0
+        self.scores=[]
+        self.cTime=0
+        global_net = ai_controller.AINetwork('test')
+        ai_controller.AIController.sess = tf.Session()
+        self.saver = tf.train.Saver(max_to_keep=10)
+        self.logo=vr.Rig("saves/Vector_Rigs/next.json")
+
+        self.numShips=1
+        self.controllers=[]
+        angle=0
+        angleInc=math.pi*2/self.numShips
+        load = True
+        folder_path='saves/Gamedata/ai-model'
+        checkpoint = tf.train.get_checkpoint_state(folder_path)
+        print('Checkpoint path:', os.path.abspath(checkpoint.model_checkpoint_path))
+        #restore the checkpoint for our agent
+        self.saver.restore(ai_controller.AIController.sess, os.path.abspath(checkpoint.model_checkpoint_path))
+        #create player ship
+        s=wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player",self.world)
+        s.rig.rot=math.pi/-2
+        s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
+        self.world.shipList.append(s)
+        self.world.rigs.append(s.rig)
+        self.world.tickQueue.append(s)
+        self.inputManagers.append(inputmanagers.PlayerInputManager())
+        print('Model restored.')
+        for i in range(self.numShips):
+            pos=[self.world.radius*0.75,0]
+            sp=[0,0]
+            sp[0]=pos[0]*math.cos(angle)-pos[1]*math.sin(angle)
+            sp[1]=pos[0]*math.sin(angle)+pos[1]*math.cos(angle)
+            s=wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"enemy",self.world)
+            s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
+            s.rig.x=sp[0]
+            s.rig.y=sp[1]
+            s.rig.rot=math.pi/2+angle+math.pi*2*random.randint(0,100)/100
+            i=ai_controller.AIController(ai_id=i)
+            s.aiControllerCallback=i
+            self.inputManagers.append(i)
+            self.world.shipList.append(s)
+            self.world.rigs.append(s.rig)
+            self.world.tickQueue.append(s)
+            angle+=angleInc
+        
+    def loop(self,game,app,event):
+        self.cTime+=app.deltaTime
+        if len(self.world.shipList)<=1:#on round end
+            if isinstance(self.inputManagers[0],inputmanagers.PlayInputManager):
+                print("All enemies defeated.")
+            else:
+                print("You were defeated.")
+            pygame.quit()
+            
+        ##Pan camera
+        if self.panTarget!=-1:
+            screenwidth=app.window.get_size()
+            self.posVelocity[0]=self.world.shipList[self.panTarget].rig.x-(self.screenpos[0]+(screenwidth[0]/2)/self.wscale)
+            self.posVelocity[1]=self.world.shipList[self.panTarget].rig.y-(self.screenpos[1]+(screenwidth[1]/2)/self.wscale)
+            self.screenpos[0]+=self.posVelocity[0]*app.deltaTime
+            self.screenpos[1]+=self.posVelocity[1]*app.deltaTime
+        else:
+            self.posVelocity=[0,0]
+
+        ##input
+        for ship in range(len(self.world.shipList)):
+            ip=self.inputManagers[ship].getInputArray(app.deltaTime,self,self.world.shipList[ship])
+            if ip!=None:
+                self.world.shipList[ship].input=ip
+        delList=self.world.tick(app.deltaTime)
+        if len(delList)>0:
+            newManagers=[]
+            for i in range(len(self.inputManagers)):
+                if i in delList:
+                    self.inputManagers[i].getInputArray(app.deltaTime,self,self.world.shipList[ship],False)
+                    print("asdf",self.world.shipList)
+                    del self.world.shipList[i]
+                    print(self.world.shipList)
+                    continue
+                newManagers.append(self.inputManagers[i])
+            self.inputManagers=newManagers
                 
     def render(self,window):
         self.world.render(window,self.screenpos,self.wscale)
