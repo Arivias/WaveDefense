@@ -29,7 +29,7 @@ class EvoArenaState(wd.GameState):
         self.inputManagers=[]
         self.panTarget=-1
         self.scores=[]
-        self.maxTime=4
+        self.maxTime=20
         self.cTime=0
         self.currentGeneration=0
         global_net = ai_controller.AINetwork('test')
@@ -78,7 +78,7 @@ class EvoArenaState(wd.GameState):
             s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
             s.rig.x=sp[0]
             s.rig.y=sp[1]
-            s.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
+            s.rig.rot=math.pi/2+angle+math.pi*2*random.randint(0,100)/100
             i=ai_controller.AIController(ai_id=i)
             s.aiControllerCallback=i
             self.inputManagers.append(i)
@@ -111,7 +111,7 @@ class EvoArenaState(wd.GameState):
             self.world.rigs=[]
             #self.inputManagers=[]
             for i in range(self.numShips):
-                self.inputManagers[i].train(0.99,0.5)
+                self.inputManagers[i].train(0.99,0.0)
                 pos=[self.world.radius*0.75,0]
                 spawn_position=[0,0]
                 spawn_position[0]=pos[0]*math.cos(angle)-pos[1]*math.sin(angle)
@@ -119,7 +119,7 @@ class EvoArenaState(wd.GameState):
                 ship=wd.Ship(game.data["ships"]["e1"]["path"],game.data["ships"]["e1"]["data"],"enemy"+str(i),self.world)
                 ship.weapons[0].append(weapons.wp_PulseLaser(ship,1,"weapon1",self.world))
                 ship.rig.x, ship.rig.y = spawn_position
-                ship.rig.rot=math.pi/2+angle#math.pi*2*random.randint(0,100)/100
+                ship.rig.rot=math.pi/2+angle+math.pi*2*random.randint(0,100)/100
                 #if self.halfMode:
                 #    net=self.bestScore[cb][1]
                 #    if cu==1:
@@ -137,7 +137,7 @@ class EvoArenaState(wd.GameState):
                 self.world.tickQueue.append(ship)
                 angle+=angleInc
 
-            if self.currentGeneration%20==0:####save frequency ######disabled
+            if self.currentGeneration%10==0:####save frequency ######disabled
                 #######
                 if not self.saver:
                     self.saver = tf.train.Saver(max_to_keep=10)

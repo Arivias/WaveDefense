@@ -34,8 +34,9 @@ class AINetwork:
                 self.health, eyes
             ], axis=1)
             hidden_layer_1 = tf.layers.dense(inputs, hidden_size, activation)
-            self.value = tf.layers.dense(inputs, 1)
-            self.output = tf.layers.dense(hidden_layer_1, number_actions, tf.nn.sigmoid)
+            hidden_layer_2 = tf.layers.dense(hidden_layer_1, hidden_size, tf.nn.relu)
+            self.value = tf.layers.dense(hidden_layer_2, 1)
+            self.output = tf.layers.dense(hidden_layer_2, number_actions, tf.nn.sigmoid)
 
 
 class AINetworkTrainer:
