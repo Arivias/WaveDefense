@@ -72,7 +72,10 @@ class Rig:
                 if self.markers:#outline colliders
                     for seg in self.colliderSegments:
                         if pt in seg and self.points[lk] in seg:
-                            pygame.draw.line(window,(0,255,0),pt.ptActual(self.x,self.y,self.scale,self.screenpos),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos),2)
+                            clcolor = (0,255,0)
+                            if "nodraw" in pt.tags or "nodraw" in self.points[lk].tags:
+                                clcolor = (255,0,0)
+                            pygame.draw.line(window,clcolor,pt.ptActual(self.x,self.y,self.scale,self.screenpos),self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos),2)
                             break
                 if pt.transparency or self.points[lk].transparency:
                     if self.ptOnScreen(pt.ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window) or self.ptOnScreen(self.points[lk].ptActual(self.x,self.y,self.scale,self.screenpos,self.wscale),window):
