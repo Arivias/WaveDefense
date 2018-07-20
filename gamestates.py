@@ -204,7 +204,7 @@ class EvoArenaState(wd.GameState):
             return out
 
 class DemoArenaState(wd.GameState):####################################
-    def __init__(self,game):
+    def __init__(self,game,fun=False):
         super().__init__(game)
         self.wscale=0.12
         self.screenpos=[(-960/2)/self.wscale,(-540/2)/self.wscale]
@@ -232,7 +232,10 @@ class DemoArenaState(wd.GameState):####################################
         #create player ship
         s=wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player",self.world)
         s.rig.rot=math.pi/-2
-        s.weapons[0].append(weapons.wp_BigLaser(s,3,"weapon1",self.world))
+        if fun:
+            s.weapons[0].append(weapons.wp_BigLaser(s,3,"weapon1",self.world))
+        else:
+            s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
         self.world.shipList.append(s)
         self.world.rigs.append(s.rig)
         self.world.tickQueue.append(s)
