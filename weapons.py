@@ -21,6 +21,23 @@ class wp_PulseLaser(wdcore.Weapon):
         if self.cooldown>0:
             self.cooldown=max(0,self.cooldown-deltaTime)
 
+class wp_BigLaser(wdcore.Weapon):
+    def __init__(self,ship,damage,category,world):
+        super().__init__("Mega Pulse",ship,category,world)
+        self.damage=damage
+        self.cooldown=0
+    def fire(self):
+        if self.cooldown==0:
+            self.cooldown=0.5
+            for pt in self.wpoints:
+                proj=p_Simple(pt,self.ship,"bolt-big.json",1800,self.damage,(255,0,0),self.world)
+                self.world.rigs.append(proj.rig)
+                self.world.tickQueue.append(proj)
+    def tick(self,deltaTime):
+        if self.cooldown>0:
+            self.cooldown=max(0,self.cooldown-deltaTime)
+        
+
 
 ####projectiles
 

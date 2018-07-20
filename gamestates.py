@@ -232,7 +232,7 @@ class DemoArenaState(wd.GameState):####################################
         #create player ship
         s=wd.Ship(game.data["player_ship"]["path"],game.data["player_ship"]["data"],"player",self.world)
         s.rig.rot=math.pi/-2
-        s.weapons[0].append(weapons.wp_PulseLaser(s,1,"weapon1",self.world))
+        s.weapons[0].append(weapons.wp_BigLaser(s,3,"weapon1",self.world))
         self.world.shipList.append(s)
         self.world.rigs.append(s.rig)
         self.world.tickQueue.append(s)
