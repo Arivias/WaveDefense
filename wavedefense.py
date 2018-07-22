@@ -16,7 +16,7 @@ class Game:
             self.data={}###TODO: load from JSON
             if fun:
                 self.data["player_ship"]={}
-                self.data["player_ship"]["path"]="saves/Vector_Rigs/m2-o.json"
+                self.data["player_ship"]["path"]="saves/Vector_Rigs/ship3.json"
                 self.data["player_ship"]["data"]=[5,15,10,20,170,60,230,180,20,660]
             else:
                 self.data["player_ship"]={}
